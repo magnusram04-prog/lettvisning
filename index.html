@@ -223,7 +223,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 
 /* ================= STATE ================= */
 const LS='oppussing-vr-v1';
-const APP_VER='v63',APP_DATE='8.11.2026';let APP_NEW=false;
+const APP_VER='v64',APP_DATE='8.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -320,7 +320,8 @@ function wallData(){
  {const ends=new Map(),add=(k,w)=>{let l=ends.get(k);if(!l)ends.set(k,l=[]);l.push(w)};for(const w of walls){add(w.a.join(","),w);add(w.b.join(","),w)}
   const dir=w=>{const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1],L=Math.hypot(dx,dz)||1;return[dx/L,dz/L]};
   const coll=(w,k)=>(ends.get(k)||[]).some(o=>{if(o===w)return false;const a=dir(w),b=dir(o);return Math.abs(a[0]*b[1]-a[1]*b[0])<.01});
-  for(const w of walls){w.extA=!coll(w,w.a.join(","));w.extB=!coll(w,w.b.join(","))}}
+  for(const w of walls){w.extA=!coll(w,w.a.join(","));w.extB=!coll(w,w.b.join(","));w.tA=ends.get(w.a.join(",")).length>=3;w.tB=ends.get(w.b.join(",")).length>=3}}
+ // T-kryss: veggen som kommer på tvers stopper 4 mm før motsatt flate på veggen den møter – ellers ligger endeflaten i samme plan og flimrer
  for(const w of walls){
   const dx=w.b[0]-w.a[0],dz=w.b[1]-w.a[1];w.L=Math.hypot(dx,dz);w.u=[dx/w.L,dz/w.L];
   const ops=[];
@@ -328,10 +329,10 @@ function wallData(){
    const px=it.x-w.a[0],pz=it.z-w.a[1];const t=px*w.u[0]+pz*w.u[1];const dist=Math.abs(px*w.u[1]-pz*w.u[0]);
    const nx=Math.sin(it.rot),nz=Math.cos(it.rot);if(dist>.12||Math.abs(nx*w.u[0]+nz*w.u[1])>.3)continue;
    const D=dims(it);if(t<-D.w/2||t>w.L+D.w/2)continue;
-   ops.push({s0:t-D.w/2,s1:t+D.w/2,y0:clamp(it.y-D.h/2,0,Hh),y1:clamp(it.y+D.h/2,0,Hh),id:it.id});
+   const iy=it.y??d.y??1.05;ops.push({s0:t-D.w/2,s1:t+D.w/2,y0:clamp(iy-D.h/2,0,Hh),y1:clamp(iy+D.h/2,0,Hh),id:it.id});
   }
   ops.sort((a,b)=>a.s0-b.s0);
-  const P=[];const st=w.extA===false?0:-T/2,en=w.L+(w.extB===false?0:T/2);let cur=st;
+  const P=[];const st=w.extA===false?0:-(w.tA?T/2-.004:T/2),en=w.L+(w.extB===false?0:(w.tB?T/2-.004:T/2));let cur=st;
   for(const o of ops){const s0=Math.max(o.s0,cur),s1=Math.min(o.s1,en);if(s1<=s0)continue;
    if(s0>cur)P.push({s0:cur,s1:s0,y0:0,y1:Hh});
    if(o.y0>.01)P.push({s0,s1,y0:0,y1:o.y0,sill:1});
@@ -1197,7 +1198,7 @@ window.__prep=()=>PREP;
 const ZF={rt:null,a:null,b:null,mats:new Map(),pairs:new Map()};
 function zfMat(src,id){const k=src.uuid+'|'+id;let m=ZF.mats.get(k);if(m)return m;const c=[(id&255)/255,((id>>8)&255)/255,((id>>16)&255)/255];
  m=new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Vector3(...c)}},vertexShader:'void main(){vec4 p=vec4(position,1.);\n#ifdef USE_INSTANCING\np=instanceMatrix*p;\n#endif\ngl_Position=projectionMatrix*modelViewMatrix*p;}',fragmentShader:'uniform vec3 c;void main(){gl_FragColor=vec4(c,1.);}',side:src.side,polygonOffset:src.polygonOffset,polygonOffsetFactor:src.polygonOffsetFactor,polygonOffsetUnits:src.polygonOffsetUnits});ZF.mats.set(k,m);return m}
-function zfName(o){if(!o)return"himmel";let p=o;while(p&&!p.userData.itemId&&p.parent)p=p.parent;const it=p&&p.userData.itemId&&findItem(p.userData.itemId);return it?(CAT[it.type]?CAT[it.type].n:it.type):o.userData.wall?"vegg":o.userData.room?"gulv":o.userData.ceil?"tak":o.userData.siteMesh?"terreng/nabolag":(window.__zfdbg?"bygning["+o.name+" "+o.geometry.type+" "+o.getWorldPosition(new THREE.Vector3()).toArray().map(v=>v.toFixed(2)).join(",")+" "+(o.geometry.parameters?JSON.stringify(o.geometry.parameters).slice(0,60):"")+"]":"bygning")}
+function zfName(o){if(!o)return"himmel";let p=o;while(p&&!p.userData.itemId&&p.parent)p=p.parent;const it=p&&p.userData.itemId&&findItem(p.userData.itemId);return it?(CAT[it.type]?CAT[it.type].n:it.type):o.userData.wall?(window.__zfdbg?"vegg["+(()=>{o.geometry.computeBoundingBox();const b=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);return [b.min.x,b.min.z,b.max.x,b.max.z].map(v=>v.toFixed(2)).join(",")})()+"]":"vegg"):o.userData.room?"gulv":o.userData.ceil?"tak":o.userData.siteMesh?"terreng/nabolag":(window.__zfdbg?"bygning["+o.name+" "+o.geometry.type+" "+o.getWorldPosition(new THREE.Vector3()).toArray().map(v=>v.toFixed(2)).join(",")+" "+(o.geometry.parameters?JSON.stringify(o.geometry.parameters).slice(0,60):"")+"]":"bygning")}
 function zfCount(C0){const W=640,H=360;if(!ZF.rt){ZF.rt=new THREE.WebGLRenderTarget(W,H);ZF.a=new Uint8Array(W*H*4);ZF.b=new Uint8Array(W*H*4)}
  const saved=[],hid=[],far=[],objs=[];let id=1;scene.traverse(o=>{if(o.isSprite||o.isLine||o.isPoints){if(o.visible){hid.push(o);o.visible=false}return}if(!o.isMesh||!o.material)return;
   const ms=[].concat(o.material);if(ms.some(m=>m.transparent&&m.opacity<.99||m===GLASS)){if(o.visible){hid.push(o);o.visible=false}return}
@@ -1213,6 +1214,8 @@ function zfCount(C0){const W=640,H=360;if(!ZF.rt){ZF.rt=new THREE.WebGLRenderTar
    let flat=true;for(let dy=-2;dy<=2&&flat;dy++)for(let dx=-2;dx<=2;dx++)if(!same(i,i+dy*W+dx)){flat=false;break}if(flat){n++;const k=zfName(objs[ia])+' / '+zfName(objs[ib]);ZF.pairs.set(k,(ZF.pairs.get(k)||0)+1)}}}
  finally{renderer.setRenderTarget(null);renderer.setClearColor(cc0,ca0);for(const[o,m]of saved)o.material=m;hid.forEach(o=>o.visible=true);scene.background=bg;scene.fog=fog}
  return n}
+function qaPkt(P){const c=centroid(P),dE=(x,z)=>Math.min(...P.map((a,i)=>{const b=P[(i+1)%P.length],dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)}));
+ if(inPoly(c[0],c[1],P)&&dE(c[0],c[1])>.5)return c;const xs=P.map(p=>p[0]),zs=P.map(p=>p[1]);let best=-1,r=c;for(let x=Math.min(...xs);x<=Math.max(...xs);x+=.1)for(let z=Math.min(...zs);z<=Math.max(...zs);z+=.1){if(!inPoly(x,z,P))continue;const d=dE(x,z);if(d>best){best=d;r=[x,z]}}return r}
 async function kvalitetssjekk(vis=true){
  const res=[],add=(st,t,d='')=>res.push({st,t,d}),sl=ms=>new Promise(r=>setTimeout(r,ms)),t0=performance.now();
  const tick=()=>{try{window.__loopFn&&window.__loopFn(performance.now())}catch(e){}};
@@ -1248,7 +1251,9 @@ async function kvalitetssjekk(vis=true){
    for(const L of levelList()){const dr=L.items.filter(i=>DOORT.has(i.type)&&(i.y??CAT[i.type].y)-dims(i).h/2<.15);
     const fu=L.items.filter(i=>{const c=CAT[i.type];return c&&c.m==='floor'&&!c.flat&&!SKIP.has(i.type)&&!(i.elev>0)});
     for(const D of dr){const ux=Math.cos(D.rot),uz=-Math.sin(D.rot),nx=Math.sin(D.rot),nz=Math.cos(D.rot),hw=dims(D).w/2-.08;
-     for(const F of fu){const f=dims(F),ax=Math.cos(F.rot),az=-Math.sin(F.rot),bx_=Math.sin(F.rot),bz=Math.cos(F.rot);let hit=false;
+     // ting inni et lite skap/kott (≤1,5 m²) står foran skapets egen åpning med vilje – man går ikke gjennom et skap
+     const skap=L.rooms.filter(r=>{const P=r.pts;let s=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];s+=a[0]*b[1]-b[0]*a[1]}return P.length>2&&Math.abs(s)/2<=1.5});
+     for(const F of fu){if(skap.some(r=>inPoly(F.x,F.z,r.pts)))continue;const f=dims(F),ax=Math.cos(F.rot),az=-Math.sin(F.rot),bx_=Math.sin(F.rot),bz=Math.cos(F.rot);let hit=false;
       for(let a=0;a<=6&&!hit;a++)for(let b=0;b<=6&&!hit;b++){const lx=(a/6-.5)*(f.w-.06),lz=(b/6-.5)*(f.d-.06),px=F.x+ax*lx+bx_*lz-D.x,pz=F.z+az*lx+bz*lz-D.z;if(Math.abs(px*ux+pz*uz)<hw&&Math.abs(px*nx+pz*nz)<.45)hit=true}
       if(hit)bl.push((L.name?L.name+': ':'')+CAT[F.type].n+' ved ('+F.x.toFixed(2)+', '+F.z.toFixed(2)+') sperrer '+CAT[D.type].n.toLowerCase()+' ved ('+D.x.toFixed(2)+', '+D.z.toFixed(2)+')')}}}
    add(bl.length?'feil':'ok','Møbler foran dører',bl.length?bl.join('; '):'ingen dører er sperret')}
@@ -1272,7 +1277,7 @@ async function kvalitetssjekk(vis=true){
   const W=480,Hh=270,rt=new THREE.WebGLRenderTarget(W,Hh,{type:THREE.FloatType}),C=new THREE.PerspectiveCamera(75,W/Hh,.05,cam.far||300),buf=new Float32Array(W*Hh*4);
   const rooms=[];for(const L of levelList())for(const r of L.rooms)if(r.pts.length>2)rooms.push([L,r]);const nanRooms=[],lums=[],zf=[];const buf2=new Float32Array(W*Hh*4);
   const tm=renderer.toneMapping;
-  for(const[L,r]of rooms){const[cx,cz]=centroid(r.pts);C.position.set(cx,L.y+1.55,cz);let nan=0,lum=0,blk=0,flk=0;ZF.pairs.clear();
+  for(const[L,r]of rooms){const[cx,cz]=qaPkt(r.pts);C.position.set(cx,L.y+1.55,cz);let nan=0,lum=0,blk=0,flk=0;ZF.pairs.clear();
    for(let k=0;k<4;k++){C.rotation.set(0,k*PI/2,0);C.updateMatrixWorld(true);probeUpdate(C);renderer.setRenderTarget(rt);renderer.render(scene,C);renderer.readRenderTargetPixels(rt,0,0,W,Hh,buf);
     for(let i=0;i<W*Hh;i++){const R_=buf[i*4],G=buf[i*4+1],B=buf[i*4+2];if(R_!==R_||G!==G||B!==B){nan++;continue}const l=.2126*R_+.7152*G+.0722*B;lum+=l;if(l<.002)blk++}
     flk+=zfCount(C)}
@@ -1317,7 +1322,7 @@ function placeGroup(it,g){placeGroup_(it,g);if(it.ground){g.position.y=groundY(i
 function placeGroup_(it,g){const d=CAT[it.type],D=dims(it);g.rotation.y=it.rot;
  if(d.m==='floor'){g.position.set(it.x,it.elev||0,it.z);wallNudge(it,g)}
  else if(d.m==='ceiling')g.position.set(it.x,H(),it.z);
- else{const nx=Math.sin(it.rot),nz=Math.cos(it.rot),o=d.open?0:T/2;g.position.set(it.x+nx*o,it.y,it.z+nz*o)}
+ else{const nx=Math.sin(it.rot),nz=Math.cos(it.rot),o=d.open?0:T/2;g.position.set(it.x+nx*o,it.y??d.y??1.5,it.z+nz*o)}// uten egen høyde: katalogens (ellers NaN → ugyldig geometri)
  g.updateMatrixWorld(true);
  if(g.userData.light&&g.userData.lp){g.userData.light.position.copy(g.userData.lp).applyMatrix4(g.matrixWorld)}
  renderer.shadowMap.needsUpdate=true;needRender=true;
