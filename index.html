@@ -223,7 +223,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 
 /* ================= STATE ================= */
 const LS='oppussing-vr-v1';
-const APP_VER='v60',APP_DATE='8.11.2026';let APP_NEW=false;
+const APP_VER='v61',APP_DATE='8.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -2238,7 +2238,7 @@ Object.assign(B,{
   const D=new THREE.MeshStandardMaterial({color:'#f4f2ee',roughness:.6,bumpMap:CLAD,bumpScale:1.5});D.userData.own=1;for(const sx of[-1,1])bx(g,2.4,2.1,.04,D,sx*1.55,1.05,d/2+.01);const T_=mat('#9a2b2b',{roughness:.6});for(const sx of[-1,1])bx(g,2.55,.08,.06,T_,sx*1.55,2.14,d/2+.03);
   const r=new THREE.Group();r.position.y=wh;g.add(r);B.hustak(r,w+.5,d+.6,h-wh,M,{color:'#ffffff',trim:'#9a2b2b'})},
  grus(g,w,d,h,M,it){const t=GRAVEL.clone(),b=GRAVEL.clone();for(const x of[t,b]){x.needsUpdate=true;x.repeat.set(w/1.5,d/1.5)}t.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshStandardMaterial({map:t,bumpMap:b,bumpScale:3,roughness:1});m.userData.own=1;const p=msh(g,new THREE.PlaneGeometry(w,d),m,0,.006,0);p.rotation.x=-PI/2},
- flisespeil(g,w,d,h,M,it){const t=cvTex(256,128,(x,W,H)=>{x.fillStyle='#bfb29a';x.fillRect(0,0,W,H);for(let j=0;j<4;j++)for(let i=0;i<8;i++){const v=rnd01();x.fillStyle=v<.5?'#ead9b8':'#e2cfa9';x.fillRect(i*32+1,j*32+1,30,30);x.strokeStyle='rgba(150,110,70,.35)';x.beginPath();x.arc(i*32+16,j*32+16,8,0,7);x.stroke()}},[w/1.2,h/.6],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.3});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2)},
+ flisespeil(g,w,d,h,M,it){if(it&&it.color){const c=new THREE.Color(it.color),gr='#'+c.clone().offsetHSL(0,0,-.12).getHexString();const t=cvTex(256,128,(x,W,H)=>{x.fillStyle=gr;x.fillRect(0,0,W,H);for(let j=-1;j<9;j++)for(let i=-1;i<17;i++){const k=c.clone().offsetHSL(0,0,(rnd01()-.5)*.06);x.fillStyle='#'+k.getHexString();if(it.fiskeben){x.save();x.translate(i*16+(j%2)*8,j*16);x.rotate(((i+j)%2?1:-1)*Math.PI/4);x.fillRect(-10,-3,20,6);x.restore()}else x.fillRect(i*16+1,j*16+1,14,14)}},[w/.6,h/.3],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.25});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2);return}const t=cvTex(256,128,(x,W,H)=>{x.fillStyle='#bfb29a';x.fillRect(0,0,W,H);for(let j=0;j<4;j++)for(let i=0;i<8;i++){const v=rnd01();x.fillStyle=v<.5?'#ead9b8':'#e2cfa9';x.fillRect(i*32+1,j*32+1,30,30);x.strokeStyle='rgba(150,110,70,.35)';x.beginPath();x.arc(i*32+16,j*32+16,8,0,7);x.stroke()}},[w/1.2,h/.6],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.3});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2)},
  overbygg(g,w,d,h,M,it){const P=mat(it.color||CAT.overbygg.col,{roughness:.5});for(const sx of[-1,1])bx(g,.12,h,.12,P,sx*(w/2-.06),h/2,d/2-.06);bx(g,w,.2,.12,P,0,h-.1,d/2-.06)},
 });
 {const kb=B.kjokken2;B.kjokken2=function(g,w,d,h,M,it){kb(g,w,d,h,M,it);if(!it.oak)return;const O=OAK(it.oak);g.traverse(o=>{if(o.isMesh&&o.geometry.parameters&&o.geometry.parameters.depth===.018)o.material=O})}}
