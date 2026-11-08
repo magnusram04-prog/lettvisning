@@ -223,7 +223,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 
 /* ================= STATE ================= */
 const LS='oppussing-vr-v1';
-const APP_VER='v61',APP_DATE='8.11.2026';let APP_NEW=false;
+const APP_VER='v62',APP_DATE='8.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -1321,7 +1321,13 @@ function placeGroup_(it,g){const d=CAT[it.type],D=dims(it);g.rotation.y=it.rot;
  renderer.shadowMap.needsUpdate=true;needRender=true;
 }
 const BUILTIN_MAP={sofa:['Sofa_01',1],lenestol:['modern_arm_chair_01',1],loungestol:['modern_arm_chair_01',1],sofabord_rund:['coffee_table_round_01',0],plante:['potted_plant_04',0]},BUILTIN={},tintCache=new Map();
-const builtinFor=t=>{const b=BUILTIN_MAP[t];return b&&BUILTIN[b[0]]?b:null};
+const PH_MAP={plante_stor:['potted_plant_02',0],vase_keramikk:['ceramic_vase_01',0],sidebord:['side_table_01',0],salongbord:['modern_coffee_table_01',0],stol:['dining_chair_02',1],barkrakk:['bar_chair_round_01',1]};
+Object.assign(BUILTIN_MAP,PH_MAP);const PH_LOAD={};
+async function phLoad(id){if(PH_LOAD[id])return PH_LOAD[id];return PH_LOAD[id]=(async()=>{try{const base='ph/'+id+'/',list=await (await fetch(base+'files.json')).json();
+ const fl=await Promise.all(list.map(async n=>({name:n,buf:await (await fetch(base+n)).arrayBuffer()})));const r=prepareModel(await parseModel(fl),{m:'floor'});finalizeModel(r.tpl,{});BUILTIN[id]=r;
+ dirty3D=true;structKey=null;needRender=true;PT.dirty=true}catch(e){console.warn('poly haven',id,e)}})()}
+const builtinFor=t=>{const b=BUILTIN_MAP[t];if(!b)return null;if(BUILTIN[b[0]])return b;if(PH_MAP[t])phLoad(b[0]);return null};
+window.__phVent=()=>Promise.all(Object.values(PH_LOAD));
 async function loadBuiltin(){const A=window.__ASSETS&&window.__ASSETS.models;if(!A)return;
  for(const[id,files]of Object.entries(A)){try{const fl=files.map(f=>{const bin=atob(f.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return{name:f.name,buf:u8.buffer}});
   const r=prepareModel(await parseModel(fl),{m:'floor'});finalizeModel(r.tpl,{});BUILTIN[id]=r}catch(e){console.warn('modell',id,e)}}
@@ -3626,7 +3632,7 @@ async function giBake(){if(GI.busy||renderer.xr.isPresenting)return;GI.busy=true
   const segs=[];S.rooms.forEach(r=>r.pts.forEach((p,i)=>segs.push([p,r.pts[(i+1)%r.pts.length]])));S.walls.forEach(w=>segs.push([w.a,w.b]));
   const dSeg=(x,z,[a,c])=>{const dx=c[0]-a[0],dz=c[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)};
   // møbler med bein (bord, stoler) stenger ikke: punktene under dem gir den mørke skyggen under bordplaten
-  const boxes=[];itemG.children.forEach(g=>{const it=findItemAll(g.userData.itemId);if(it&&!CAT[it.type].flat&&!LEGGED.has(it.type)&&CAT[it.type].m!=='ceiling')boxes.push(new THREE.Box3().setFromObject(g).expandByScalar(.05))});
+  const boxes=[];itemG.children.forEach(g=>{const it=findItemAll(g.userData.itemId);if(it&&!CAT[it.type].flat&&!LEGGED.has(it.type)&&CAT[it.type].m!=='ceiling'){const bx=new THREE.Box3().setFromObject(g).expandByScalar(.05);if([bx.min.x,bx.min.y,bx.min.z,bx.max.x,bx.max.y,bx.max.z].every(Number.isFinite))boxes.push(bx)}});// NaN-boks ville «inneholde» alle punkter
   const ok=new Uint8Array(N),idx=(i,j,k)=>i+nx*(j+ny*k),P_=new THREE.Vector3();let total=0;
   const segsL=LVg.map(L=>{const s=[];L.rooms.forEach(r=>r.pts.forEach((p,i)=>s.push([p,r.pts[(i+1)%r.pts.length]])));L.walls.forEach(w=>s.push([w.a,w.b]));return s});
   for(let k=0;k<nz;k++)for(let i=0;i<nx;i++){const x=x0+i*st,z=z0+k*st;if(!LVg.some((L,li)=>L.rooms.some(r=>inPoly(x,z,r.pts))&&!segsL[li].some(s=>dSeg(x,z,s)<.15)))continue;
