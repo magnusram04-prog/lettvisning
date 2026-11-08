@@ -223,7 +223,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 
 /* ================= STATE ================= */
 const LS='oppussing-vr-v1';
-const APP_VER='v62',APP_DATE='8.11.2026';let APP_NEW=false;
+const APP_VER='v63',APP_DATE='8.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -1125,7 +1125,9 @@ function fixTangents(root){if(!root)return;root.traverse(o=>{const g=o.isMesh&&o
 const LYS_VER='2',PRE={tried:'',busy:false};
 function lysNormKey(){let k=giKey();const ids=new Map();let n=0;const add=a=>(a||[]).forEach(o=>{if(o&&o.id&&!ids.has(o.id))ids.set(o.id,'#'+(n++))});
  for(const L of levelList()){add(L.rooms);add(L.walls);add(L.items)}for(const[id,t]of ids)k=k.split(id).join(t);return LYS_VER+'|'+k}
-async function lysHash(){const b=new TextEncoder().encode(lysNormKey());const d=new Uint8Array(await crypto.subtle.digest('SHA-256',b));return[...d.slice(0,10)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const lysSort=v=>Array.isArray(v)?v.map(lysSort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,lysSort(v[k])])):v;
+function lysNormKeyS(){const k=lysNormKey(),i=k.indexOf('|');try{return'S'+k.slice(0,i+1)+JSON.stringify(lysSort(JSON.parse(k.slice(i+1))))}catch(e){return k}}
+async function lysHash(gammel){const b=new TextEncoder().encode(gammel?lysNormKey():lysNormKeyS());const d=new Uint8Array(await crypto.subtle.digest('SHA-256',b));return[...d.slice(0,10)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 const lysOk=()=>giFits()&&!giStale()&&LM.ok&&VL.key===GI.key;
 async function lysExport(){if(!lysOk())throw new Error('lyset er ikke beregnet for denne boligen');const r=GI.raw,gh=new Uint16Array(r.co.length);for(let i=0;i<gh.length;i++)gh[i]=THREE.DataUtils.toHalfFloat(r.co[i]);
  const lh=LM.tex.image.data,ks=[...VL.map.keys()],vh=new Uint16Array(ks.length*3);ks.forEach((k,i)=>{const v=VL.map.get(k);for(let c=0;c<3;c++)vh[i*3+c]=THREE.DataUtils.toHalfFloat(v[c])});
@@ -1149,7 +1151,7 @@ async function lcPut(hs,b){try{const db=await lcDb();const st=db.transaction('l'
 async function lysFetch(onP){if(PRE.busy||GI.busy||lysOk()||!window.crypto||!crypto.subtle||typeof DecompressionStream==='undefined')return false;
  let hs;try{hs=await lysHash()}catch(e){return false}if(hs===PRE.tried)return false;PRE.tried=hs;PRE.busy=true;
  try{const lc=await lcGet(hs);if(lc){if(GI.busy||lysOk())return false;onP&&onP(1);await lysImport(await lc.arrayBuffer());return true}
-  const r=await fetch('lys/'+hs+'.json');if(!r.ok)return false;const tot=+r.headers.get('content-length')||0;let txt;
+  let r=await fetch('lys/'+hs+'.json');if(!r.ok){const hg=await lysHash(true);if(hg!==hs)r=await fetch('lys/'+hg+'.json');if(!r.ok)return false}const tot=+r.headers.get('content-length')||0;let txt;
   if(r.body&&tot&&onP){const rd=r.body.getReader(),parts=[];let got=0;for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onP(Math.min(1,got/tot))}txt=await new Blob(parts).text()}else txt=await r.text();
   const j=JSON.parse(txt);const s=atob(j.gz),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);if(GI.busy||lysOk())return false;
   await lysImport(b);return true}
