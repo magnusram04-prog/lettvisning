@@ -247,7 +247,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v67',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v68',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -396,7 +396,8 @@ function bbox(){let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;const add=(x,z)=>{x0=Math.min(
  if(x0>x1){add(0,0);add(6,5)}return{x0,z0,x1,z1}}
 
 /* ================= UI-HJELPERE ================= */
-let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
 function modal(html,onMount){const m=$('#modal');m.innerHTML='<div class="dlg">'+html+'</div>';m.classList.add('open');m.onclick=e=>{if(e.target===m)closeModal()};onMount&&onMount(m.firstChild)}
 function closeModal(){$('#modal').classList.remove('open')}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
@@ -865,7 +866,11 @@ function buildSite(st){
  const part=(g,gr)=>{const o=new THREE.BufferGeometry();for(const[n,a]of Object.entries(g.attributes))o.setAttribute(n,new THREE.BufferAttribute(a.array.slice(gr.start*a.itemSize,(gr.start+gr.count)*a.itemSize),a.itemSize));return o};
  const putPrism=(g,mRoof,mWall,sh)=>{for(const gr of g.groups)put(part(g,gr),gr.materialIndex===0?mRoof:mWall,sh);g.dispose()};
  const GAR=levelList().flatMap(L=>L.items.filter(i=>i.type==='garasje'));// et bygg vi har modellert selv (garasjen) tegnes ikke en gang til fra kartet
- for(const o of st.blds)if(o!==own&&!(st.modellert&&o.own)&&!GAR.some(g=>{const cx=o.p.reduce((s,q)=>s+q[0],0)/o.p.length,cz=o.p.reduce((s,q)=>s+q[1],0)/o.p.length;return Math.hypot(cx-g.x,cz-g.z)<4})){const base=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3,k=hash(o.p),sh=Math.hypot(o.p[0][0]-ccx,o.p[0][1]-ccz)<=150;
+ // kartbygg som overlapper selve leiligheten er i praksis vårt eget bygg (kartet og planen stemmer ikke helt): tegnes bare opp til gulvet,
+ // ellers går nabobyggets vegger tvers gjennom rommene
+ const RP=[];for(const r of [...(S.rooms||[]),...((S.levels||[]).flatMap(l=>l.rooms||[]))]){const xs=r.pts.map(p=>p[0]),zs=r.pts.map(p=>p[1]);for(let x=Math.min(...xs)+.2;x<Math.max(...xs)-.1;x+=.4)for(let z=Math.min(...zs)+.2;z<Math.max(...zs)-.1;z+=.4)if(inPoly(x,z,r.pts))RP.push([x,z])}
+ const lavt=o=>{let n=0;for(const[x,z]of RP)if(inPoly(x,z,o.p)&&++n>=3)break;if(n<3)return false;const yb=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3;if(yb<-.25)add(prism(o.p,yb,-.25),[M.roof,villa?M.villa[0]:M.wall]);return true};
+ for(const o of st.blds)if(o!==own&&!(st.modellert&&o.own)&&!lavt(o)&&!GAR.some(g=>{const cx=o.p.reduce((s,q)=>s+q[0],0)/o.p.length,cz=o.p.reduce((s,q)=>s+q[1],0)/o.p.length;return Math.hypot(cx-g.x,cz-g.z)<4})){const base=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3,k=hash(o.p),sh=Math.hypot(o.p[0][0]-ccx,o.p[0][1]-ccz)<=150;
   if(villa){const wh=o.h*.7,top=base+.3+wh;putPrism(prism(o.p,base,top),M.tak[k%3],M.villa[k%6],sh);gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}
   else{const blokk=o.h>=25,top=base+.3+(blokk?o.h:o.h*.8);putPrism(prism(o.p,base,top),M.roof,M.walls[blokk?3:k%3],sh);if(!blokk)gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}}
  for(const{m,sh,gs}of BK.values()){const g=mergeGeometries(gs,false);gs.forEach(x=>x.dispose());if(!g)continue;g.computeBoundingSphere();const me=add(g,m);me.castShadow=sh}
@@ -2013,7 +2018,7 @@ function addLevel(){if(!S.levels||!S.levels.length)S.levels=[{id:uid(),name:'1. 
 function renderLvlBar(){let b=document.getElementById('lvlbar');if(!b){b=document.createElement('div');b.id='lvlbar';b.style.cssText='position:absolute;left:10px;top:54px;z-index:5;display:flex;gap:6px;flex-wrap:wrap';document.getElementById('stage').appendChild(b);
   b.onclick=e=>{const t=e.target.closest('button');if(!t)return;if(t.dataset.l==='+'){snapUndo();addLevel();return}setLevel(+t.dataset.l)}}
  const LV=levelList(),a=actLv(),btn=(l,txt,on)=>`<button data-l="${l}" style="padding:5px 10px;border-radius:14px;border:1px solid var(--line);background:${on?'var(--acc)':'var(--card)'};color:${on?'#fff':'var(--ink)'};font:13px system-ui">${txt}</button>`;
- b.innerHTML=(multiLv()?LV.map(L=>btn(L.i,L.name||((L.i+1)+'. etasje'),L.i===a)).join(''):'')+(curView==='plan'?btn('+','+ etasje',false):'')}
+ b.innerHTML=(multiLv()?LV.map(L=>btn(L.i,L.name||((L.i+1)+'. etasje'),L.i===a)).join(''):'')+(curView==='plan'&&!VIS?btn('+','+ etasje',false):'')}
 const STAIRT=new Set(['trapp','trapp_u']);
 function stairsOf(L){return L.items.filter(it=>STAIRT.has(it.type)).map(it=>{const D=dims(it),c=Math.cos(it.rot),s=Math.sin(it.rot);return{it,L,yAt:stairYAt(it),hull:it.hull,w:D.w,d:D.d,h:D.h,x:it.x,z:it.z,c,s,
  pts:[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>[it.x+a*D.w/2*c+b*D.d/2*s,it.z-a*D.w/2*s+b*D.d/2*c])}})}
@@ -2783,6 +2788,14 @@ const b64u={enc:o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace
  dec:s=>{try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}};
 const URLQ=(()=>{const q=new URLSearchParams(location.search);try{const h=(location.hash||'').replace(/^#/,'');if(h.includes('='))new URLSearchParams(h).forEach((v,k)=>{if(!q.has(k))q.set(k,v)})}catch(e){}return q})();
 const VIS=URLQ.has('vis')||URLQ.has('m')||/github\.io$/.test(location.hostname)||URLQ.has('offentlig');
+if(VIS){const re=/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}\u{24D8}]/gu;
+ const vask=v=>v.replace(re,'').replace(/^[ \t]+(?=\S)/,'').replace(/ {2,}/g,' ');
+ const fx=t=>{const v=t.nodeValue;if(!v)return;const n=vask(v);if(n!==v)t.nodeValue=n};
+ const rens=n=>{if(n.nodeType===3)return fx(n);if(n.nodeType!==1||n.tagName==='CANVAS'||n.tagName==='SCRIPT'||n.tagName==='STYLE')return;
+  const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT);let t;while((t=w.nextNode()))fx(t);
+  for(const at of['title','placeholder','aria-label'])n.querySelectorAll('['+at+']').forEach(e=>{const v=e.getAttribute(at),nv=vask(v).trim();if(nv!==v)e.setAttribute(at,nv)})};
+ const go=()=>{rens(document.body);new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')fx(m.target);else m.addedNodes.forEach(rens)}}).observe(document.body,{subtree:true,childList:true,characterData:true})};
+ document.body?go():addEventListener('DOMContentLoaded',go)}
 const MEGLER_LS='lettvisning-megler';
 function meglerLagret(){try{return JSON.parse(localStorage.getItem(MEGLER_LS)||'null')}catch(e){return null}}
 let MEGLER=(URLQ.get('m')&&b64u.dec(URLQ.get('m')))||meglerLagret()||null;
