@@ -247,7 +247,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v68',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v69',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -2788,6 +2788,8 @@ const b64u={enc:o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace
  dec:s=>{try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}};
 const URLQ=(()=>{const q=new URLSearchParams(location.search);try{const h=(location.hash||'').replace(/^#/,'');if(h.includes('='))new URLSearchParams(h).forEach((v,k)=>{if(!q.has(k))q.set(k,v)})}catch(e){}return q})();
 const VIS=URLQ.has('vis')||URLQ.has('m')||/github\.io$/.test(location.hostname)||URLQ.has('offentlig');
+if(VIS&&location.protocol.startsWith("http")){try{fetch(location.pathname+"?_sjekk="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{const m=t.match(/APP_VER='(v\d+)'/);
+ if(m&&m[1]!==APP_VER){let n=0;try{n=+sessionStorage.getItem("lv-oppd")||0}catch(e){}if(n<2){try{sessionStorage.setItem("lv-oppd",n+1)}catch(e){}const q=new URLSearchParams(location.search);q.set("_v",m[1]);location.replace(location.pathname+"?"+q.toString()+location.hash)}}}).catch(()=>{})}catch(e){}}
 if(VIS){const re=/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}\u{24D8}]/gu;
  const vask=v=>v.replace(re,'').replace(/^[ \t]+(?=\S)/,'').replace(/ {2,}/g,' ');
  const fx=t=>{const v=t.nodeValue;if(!v)return;const n=vask(v);if(n!==v)t.nodeValue=n};
