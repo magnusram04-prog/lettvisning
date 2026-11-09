@@ -222,8 +222,10 @@ const lampOn=it=>it.on!==false&&!S.lampsOff;
 const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}};
 
 /* ================= STATE ================= */
-const LS='oppussing-vr-v1';
-const APP_VER='v64',APP_DATE='8.11.2026';let APP_NEW=false;
+const LS='lettvisning-v1';
+try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
+try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
+const APP_VER='v65',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -292,7 +294,7 @@ function undo(){if(VIS)return;const j=undoStack.pop();if(!j)return toast('Ingent
 let dirty3D=true;
 function live(){ver++;dirty3D=true;needRender=true;draw2D()}
 function dorStd(){if(!S.dorStd){for(const it of S.items)if(it.type==='apning'&&!it.bue&&!it.fast&&(it.h??2.1)<=2.15&&(it.w??.9)<.9)it.w=.9;if(S.levels)for(const L of S.levels)if(L&&L.items)for(const it of L.items)if(it.type==='apning'&&!it.bue&&!it.fast&&(it.h??2.1)<=2.15&&(it.w??.9)<.9)it.w=.9;S.dorStd=1}}
-function changed(){dorStd();ver++;save();dirty3D=true;needRender=true;PT.dirty=true;draw2D();updateSheet();vrMenuDraw()}
+function changed(){dorStd();ver++;save();dirty3D=true;needRender=true;PT.dirty=true;draw2D();updateSheet()}
 const findItem=id=>S.items.find(i=>i.id===id);
 const H=()=>S.wallH||2.5;
 
@@ -590,7 +592,7 @@ renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.0;
 THREE.ShaderChunk.lights_physical_fragment=THREE.ShaderChunk.lights_physical_fragment.replace('material.roughness = max( roughnessFactor, 0.0525 );material.roughness += geometryRoughness;','material.roughness = max( roughnessFactor, 0.0525 );material.roughness += geometryRoughness;\n#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP )\n{vec3 sdx=dFdx(normal),sdy=dFdy(normal);float sv=.25*(dot(sdx,sdx)+dot(sdy,sdy));float sa=clamp(material.roughness*material.roughness+min(2.*sv,.3),0.,1.);material.roughness=max(material.roughness,sqrt(sa));}\n#endif');
 c3.addEventListener('webglcontextlost',e=>{e.preventDefault();try{if(typeof PT!=='undefined'&&PT.on){PT.auto=false;localStorage.setItem(LS+'-fotomodus','av')}}catch(_){}setTimeout(()=>{try{toast('Grafikkortet ble nullstilt – last siden på nytt')}catch(_){}},0)});
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
-renderer.xr.enabled=true;
+
 const scene=new THREE.Scene();
 const pmrem=new THREE.PMREMGenerator(renderer);const dimEnv=(re,k)=>{re.traverse(o=>{if(o.material){o.material=o.material.clone();if(o.material.color)o.material.color.multiplyScalar(k);if(o.material.emissive)o.material.emissive.multiplyScalar(k)}});return re};const envTex=pmrem.fromScene(dimEnv(new RoomEnvironment(),.55),0.04).texture;
 const envWarm=(()=>{const re=dimEnv(new RoomEnvironment(),.55);re.traverse(o=>{if(o.material&&o.material.color){o.material=o.material.clone();o.material.color.multiply(new THREE.Color('#ffe2c2'))}if(o.material&&o.material.emissive){o.material.emissive.multiply(new THREE.Color('#ffd7ad'))}});return pmrem.fromScene(re,0.04).texture})();
@@ -745,7 +747,7 @@ async function vlLoad(){try{const db=await lmDb();const j=await new Promise((res
 {const rr=renderer.readRenderTargetPixels.bind(renderer);renderer.readRenderTargetPixels=(rt,...a)=>{const cur=renderer.getRenderTarget();if(cur&&cur.isWebGLCubeRenderTarget&&cur!==rt){const f=renderer.getActiveCubeFace(),m=renderer.getActiveMipmapLevel();renderer.setRenderTarget(rt);try{return rr(rt,...a)}finally{renderer.setRenderTarget(cur,f,m)}}return rr(rt,...a)}}
 const AE={rt:null,buf:null,exp:1,base:1,t:0,target:0};
 function setExposure(){renderer.toneMappingExposure=AE.base*AE.exp*Math.pow(2,S.ev||0);scene.backgroundIntensity=Math.min(1,1.05/Math.max(.05,renderer.toneMappingExposure))}
-function aeUpdate(c,dt){if(GI.busy)return;if(GI.u.giOn.value<.5||renderer.xr.isPresenting){if(AE.exp!==1){AE.exp=1;AE.target=0;setExposure()}return}
+function aeUpdate(c,dt){if(GI.busy)return;if(GI.u.giOn.value<.5){if(AE.exp!==1){AE.exp=1;AE.target=0;setExposure()}return}
  AE.t-=dt;if(AE.t<=0){AE.t=.35;if(!AE.rt){AE.rt=new THREE.WebGLRenderTarget(32,24,{type:THREE.FloatType});AE.buf=new Float32Array(32*24*4)}
   const prev=renderer.getRenderTarget();renderer.setRenderTarget(AE.rt);renderer.render(scene,c);renderer.readRenderTargetPixels(AE.rt,0,0,32,24,AE.buf);renderer.setRenderTarget(prev&&prev.isWebGLCubeRenderTarget?null:prev);
   let s=0;for(let i=0;i<768;i++)s+=Math.log(1e-4+.2126*AE.buf[i*4]+.7152*AE.buf[i*4+1]+.0722*AE.buf[i*4+2]);AE.target=clamp(.2/Math.exp(s/768),.3,12)}
@@ -1021,7 +1023,7 @@ function saltak(rm,Hh){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;rm.pts.forEach(([x,z])=
  const wm=wallMat(rm.wallColor||S.wallColor).clone();wm.side=THREE.DoubleSide;wm.userData.own=1;mk(gab,wm)}
 function rebuild_(){
  dirty3D=false;needRender=true;
- const sk=structureKey();if(sk===structKey&&buildG.children.length){if(ceilG)ceilG.visible=mode3==='walk'||renderer.xr.isPresenting;rebuildItems();return}
+ const sk=structureKey();if(sk===structKey&&buildG.children.length){if(ceilG)ceilG.visible=mode3==='walk';rebuildItems();return}
  structKey=sk;try{renderLvlBar()}catch(e){}disposeG(buildG);colliders=[];const UPC=[],CEILS=[],SH=stairHoles();forEachLevel(LVo=>{const n0=buildG.children.length,c0=colliders.length;
  const Hh=H();const skirts=[],crowns=[];
  for(const w of wallData()){
@@ -1050,7 +1052,7 @@ function rebuild_(){
   if(rm.tak&&rm.tak.h>Hh+.05){saltak(rm,Hh);continue}
   const sh2=new THREE.Shape(rm.pts.map(p=>new THREE.Vector2(p[0],p[1])));(SH.ceil[LVo.i]||[]).forEach(q=>{if(q.some(p=>inPoly(p[0],p[1],rm.pts)))sh2.holes.push(new THREE.Path(q.map(p=>new THREE.Vector2(p[0],p[1]))))});
   const c=new THREE.Mesh(new THREE.ShapeGeometry(sh2),rm.ceilWood?ceilWoodMat(rm.ceilWood):CEIL);c.rotation.x=PI/2;c.position.y=Hh;c.userData={ceil:1};c.castShadow=c.receiveShadow=true;ceilG.add(c)}
- ceilG.visible=mode3==='walk'||renderer.xr.isPresenting;CEILS.push(ceilG);
+ ceilG.visible=mode3==='walk';CEILS.push(ceilG);
  {const nL=levelList()[LVo.i+1];if(nL){const gap=nL.y-LVo.y;if(gap-Hh>.01)for(const q of(SH.ceil[LVo.i]||[]))for(let k=0;k<q.length;k++){const a=q[k],b=q[(k+1)%q.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<.02)continue;
    const m=new THREE.Mesh(new THREE.BoxGeometry(len,gap-Hh+.004,.014),CEIL);m.position.set((a[0]+b[0])/2,(Hh+gap)/2,(a[1]+b[1])/2);m.rotation.y=Math.atan2(-(b[1]-a[1]),b[0]-a[0]);m.receiveShadow=true;buildG.add(m)}}}
  if(erHus()&&site()&&site().modellert){const lower=levelList().filter(M=>M.i<LVo.i);
@@ -1160,7 +1162,7 @@ async function lysFetch(onP){if(PRE.busy||GI.busy||lysOk()||!window.crypto||!cry
 function lysPre(){clearTimeout(PRE.t);clearTimeout(AUTOGI.t);PRE.t=setTimeout(async()=>{if(PREP.on||PREP.need)return;if(await lysFetch(null)){PREP.need=true;needRender=true;toast('🌤️ Ferdig beregnet lys er lastet');return}
  if(lysOk()){if(!GI.on){GI.on=true;applyNight();rebuildItems();giSave()}return}autoGI()},600)}
 const AUTOGI={t:0};function autoGI(ms=4000){clearTimeout(AUTOGI.t);if(typeof VIS!=='undefined'&&VIS)return;// visningen hos kjøpere: ingen tung lysberegning på mobilen
- AUTOGI.t=setTimeout(()=>{if(curView==='plan'||GI.busy||PREP.on||PREP.need||renderer.xr.isPresenting||PT.busy){if(curView!=='plan')autoGI(3000);return}if(!lysOk())giBake()},ms)}
+ AUTOGI.t=setTimeout(()=>{if(curView==='plan'||GI.busy||PREP.on||PREP.need||PT.busy){if(curView!=='plan')autoGI(3000);return}if(!lysOk())giBake()},ms)}
 /* ---------- Klargjøring før første bilde i 3D ----------
  Uten dette lager grafikkortet hvert shaderprogram (100–150 stk.) ett og ett midt i første bilde, og siden fryser i 5–10 s.
  Her settes lys og skygger opp slik første bilde trenger, og alle programmene lages parallelt (KHR_parallel_shader_compile)
@@ -1965,7 +1967,7 @@ const ITLV=new Map();
 let GYF=null;function groundY(x,z){const st=site();if(!st)return 0;if(!GYF||GYF.st!==st||GYF.v!==structKey||GYF.gp!==S.groundPts)GYF={st,v:structKey,gp:S.groundPts,f:terrainFn(st)};return GYF.f(x,z)}
 function stairHoles(){const f={},c={},LV=levelList();for(const L of LV)for(const st of stairsOf(L)){if(!LV[L.i+1])continue;(c[L.i]=c[L.i]||[]).push(st.hull||st.pts);(f[L.i+1]=f[L.i+1]||[]).push(st.hull||st.pts)}return{floor:f,ceil:c}}
 function ceilProxy(list){return{get visible(){return list.some(c=>c.visible)},set visible(v){list.forEach(c=>c.visible=v)},list}}
-function levelVis(){if(!multiLv())return;const walk=mode3==='walk'||renderer.xr.isPresenting,a=actLv();for(const o of buildG.children)if(o.userData.lvl!==undefined)o.visible=walk||o.userData.lvl<=a;for(const[id,c]of itemCache){const L=ITLV.get(id);if(L){const it=L.items.find(i=>i.id===id);c.g.visible=walk||(L.i<=a&&!(it&&it.type==='hustak'&&L.i===a))}}needRender=true}
+function levelVis(){if(!multiLv())return;const walk=mode3==='walk',a=actLv();for(const o of buildG.children)if(o.userData.lvl!==undefined)o.visible=walk||o.userData.lvl<=a;for(const[id,c]of itemCache){const L=ITLV.get(id);if(L){const it=L.items.find(i=>i.id===id);c.g.visible=walk||(L.i<=a&&!(it&&it.type==='hustak'&&L.i===a))}}needRender=true}
 /* ---------- Etasjer (hus) ----------
  S.levels=[{id,name,y,h, rooms,walls,items,wallColors}] beskriver alle etasjer. Den aktive etasjen (S.lvl) har sine data i
  S.rooms/S.walls/S.items/S.wallH/S.wallColors som før – så plantegning og redigering virker uendret – og feltene i
@@ -2743,7 +2745,7 @@ async function visStatistikk(){if(!CLOUD.db){modal(`<h3>📈 Statistikk</h3><sty
 
 function delBolig(){const k=hjemKey();
  if(!k){modal(`<h3>🔗 Del boligen</h3><p>Lenke kan lages for eksempelboligene i menyen. Et eget prosjekt deles med «📋 Kopier prosjekt», og mottakeren limer det inn med «📥 Lim inn prosjekt».</p><div class="acts"><button class="btn" id="dlc">Lukk</button></div>`,m=>m.querySelector('#dlc').onclick=closeModal);return}
- const url=ART_URL+'?bolig='+k,emb=`<iframe src="${url}" width="100%" height="640" style="border:0;border-radius:12px" allow="fullscreen; xr-spatial-tracking" title="${S.name} i 3D"></iframe>`;
+ const url=ART_URL+'?bolig='+k,emb=`<iframe src="${url}" width="100%" height="640" style="border:0;border-radius:12px" allow="fullscreen" title="${S.name} i 3D"></iframe>`;
  modal(`<h3>🔗 Del ${S.name}</h3><p style="font-size:13px">Lenken åpner appen rett i denne boligen.</p>
   <input id="dl1" readonly value="${url}" style="width:100%;font:12px ui-monospace,monospace;padding:6px;border:1px solid #dedad3;border-radius:8px"><div class="row" style="margin:6px 0 12px"><button class="btn" data-c="dl1">📋 Kopier lenke</button></div>
   <p style="font-size:13px">Innbygging på en nettside (meglerens egen side, ikke FINN – FINN tillater ikke innebygde sider):</p>
@@ -2754,12 +2756,12 @@ function delBolig(){const k=hjemKey();
   m.querySelector('#dlc').onclick=closeModal;m.querySelector('#dls').onclick=visStatistikk})}
 /* ================= Meglervisning =================
  Lenke: ?bolig=<nøkkel>&vis=1&m=<profil>  (m = meglerprofil som base64url-JSON, lages i «Meglerprofil og visningslenke»)
- Ren visning for kjøpere: bare gå, oversikt, etasjer og «Be om visning». VR, meny, redigering, angre og plantegningsverktøy er skjult. */
+ Ren visning for kjøpere: bare gå, oversikt, etasjer og «Be om visning». Meny, redigering, angre og plantegningsverktøy er skjult. */
 const b64u={enc:o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
  dec:s=>{try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}};
 const URLQ=(()=>{const q=new URLSearchParams(location.search);try{const h=(location.hash||'').replace(/^#/,'');if(h.includes('='))new URLSearchParams(h).forEach((v,k)=>{if(!q.has(k))q.set(k,v)})}catch(e){}return q})();
 const VIS=URLQ.has('vis')||URLQ.has('m')||/github\.io$/.test(location.hostname)||URLQ.has('offentlig');
-const MEGLER_LS='ovr-megler';
+const MEGLER_LS='lettvisning-megler';
 function meglerLagret(){try{return JSON.parse(localStorage.getItem(MEGLER_LS)||'null')}catch(e){return null}}
 let MEGLER=(URLQ.get('m')&&b64u.dec(URLQ.get('m')))||meglerLagret()||null;
 const rensUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
@@ -2785,7 +2787,7 @@ function meglerProfil(){const p=meglerLagret()||{},k=hjemKey();
   <div class="acts"><button class="btn" id="mp0">Lukk</button><button class="btn acc" id="mp1">Lagre og lag lenke</button></div>`,m=>{
   const ut=()=>{const q={};['firma','navn','tittel','tlf','epost','logo','annonse'].forEach(f=>{const v=m.querySelector('#mp_'+f).value.trim();if(v)q[f]=v.slice(0,200)});return q};
   const vis=q=>{const o=m.querySelector('#mp_ut');if(!k){o.innerHTML='<p style="font-size:13px">Åpne en av boligene i menyen først, så lages lenken for den.</p>';return}
-   const url=visLenke(k,q),emb=`<iframe src="${url}" width="100%" height="640" style="border:0;border-radius:12px" allow="fullscreen; xr-spatial-tracking" title="${esc(S.name)} i 3D"></iframe>`;
+   const url=visLenke(k,q),emb=`<iframe src="${url}" width="100%" height="640" style="border:0;border-radius:12px" allow="fullscreen" title="${esc(S.name)} i 3D"></iframe>`;
    o.innerHTML=`<p style="font-size:13px;margin:4px 0"><b>Visningslenke for ${esc(S.name)}</b> – send til kjøpere eller legg i annonsen:</p><textarea class="txt" rows="3" readonly style="width:100%">${esc(url)}</textarea>
     <p style="font-size:13px;margin:8px 0 4px"><b>Kode for å bygge inn</b> på egen nettside:</p><textarea class="txt" rows="3" readonly style="width:100%">${esc(emb)}</textarea>
     <div class="acts" style="justify-content:flex-start"><button class="btn" id="mpc">📋 Kopier lenken</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">👁 Åpne visningen</a></div>`;
@@ -2817,7 +2819,7 @@ function pubSend(tving){if(!OFFENTLIG||!SB.anon||SB.anon.startsWith('__'))return
 setInterval(()=>{if(!OFFENTLIG||document.visibilityState!=='visible'||!pubBolig())return;PUB.sek+=5;if(curView==='3d'&&mode3==='walk'){const r=romHer();if(r)PUB.rom[r]=(PUB.rom[r]||0)+5}PUB.endret=true;pubSend(false)},5000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pubSend(true)});addEventListener('pagehide',()=>pubSend(true));
 function pubKontakt(hva){if(!OFFENTLIG)return;if(hva)PUB.kt[hva]=(PUB.kt[hva]||0)+1;else PUB.kontakt++;PUB.endret=true;pubSend(true)}
-async function pubStatistikk(el){const K='ovr-statnokkel';let key='';try{key=localStorage.getItem(K)||''}catch(e){}
+async function pubStatistikk(el){const K='lettvisning-statnokkel';let key='';try{key=localStorage.getItem(K)||''}catch(e){}
  const skjema=msg=>{el.innerHTML=`<p style="font-size:13px">${msg}</p><input class="txt" id="psk" placeholder="Statistikknøkkel" style="width:70%"> <button class="btn" id="psb">Vis</button>`;
   el.querySelector('#psb').onclick=()=>{const v=el.querySelector('#psk').value.trim();if(!v)return;try{localStorage.setItem(K,v)}catch(e){}pubStatistikk(el)}};
  if(!key)return skjema('Lim inn statistikknøkkelen for den offentlige visningen (du får den av meg; den lagres bare i denne nettleseren).');
@@ -3241,72 +3243,9 @@ function walkUpdate(dt){let f=-jv.y,s=jv.x;if(keys.KeyW||keys.ArrowUp)f+=1;if(ke
  if(multiLv()||S.items.some(i=>STAIRT.has(i.type))||(erHus()&&site())){const fy=walkY(rig.position.x,rig.position.z);if(Math.abs(fy-rig.position.y)>.002){rig.position.y+=(fy-rig.position.y)*Math.min(1,dt*12);needRender=true}}
  cam.position.set(0,1.6,0);cam.rotation.set(pitchS,yawS,0)}
 
-/* ================= VR ================= */
-const VRM0=['sofa','lenestol','spisebord','stol','dobbeltseng','bokhylle','plante','gulvlampe','taklampe','vegglampe','spot','stikk2','bryter','panelovn','tv','bilde'];
-const vrC=document.createElement('canvas');vrC.width=512;vrC.height=600;const vrX=vrC.getContext('2d');const vrTex=new THREE.CanvasTexture(vrC);vrTex.colorSpace=THREE.SRGBColorSpace;
-const vrMenu=new THREE.Mesh(new THREE.PlaneGeometry(.2,.234),new THREE.MeshBasicMaterial({map:vrTex,transparent:true,side:THREE.DoubleSide}));vrMenu.userData.menu=1;
-const VBTN=[];
-function vrMenuDraw(){const x=vrX;x.clearRect(0,0,512,600);x.fillStyle='rgba(28,30,34,.94)';rr(x,0,0,512,600,28);x.fill();x.fillStyle='#fff';x.font='700 26px system-ui';x.textAlign='left';x.textBaseline='middle';x.fillText('Velg og pek på gulv/vegg',22,34);
- VBTN.length=0;const cw=118,ch=92,ox=20,oy=66;
- const VRM=[...S.models.slice(-6).map(m=>'m_'+m.id).filter(t=>CAT[t]),...VRM0].slice(0,16);VRM.forEach((t,i)=>{const cx=ox+(i%4)*(cw+4),cy=oy+Math.floor(i/4)*(ch+4);VBTN.push({x:cx,y:cy,w:cw,h:ch,t});x.fillStyle=armed===t?'#d9632b':'rgba(255,255,255,.1)';rr(x,cx,cy,cw,ch,14);x.fill();x.fillStyle='#fff';x.textAlign='center';x.font='34px system-ui';x.fillText(CAT[t].i,cx+cw/2,cy+34);x.font='600 15px system-ui';x.fillText(CAT[t].n.replace('Stikkontakt','Stikk.').slice(0,14),cx+cw/2,cy+72)});
- const acts=[['roter','⟳ Roter'],['slett','🗑 Slett'],['lys','💡 Lys'],['natt',S.night?'☀️ Dag':'🌙 Natt']];const ay=oy+4*(ch+4)+6;
- acts.forEach((a,i)=>{const cx=ox+i*(cw+4);VBTN.push({x:cx,y:ay,w:cw,h:70,a:a[0]});x.fillStyle='rgba(255,255,255,.18)';rr(x,cx,ay,cw,70,14);x.fill();x.fillStyle='#fff';x.font='600 19px system-ui';x.fillText(a[1],cx+cw/2,ay+35)});
- const sel_=sel&&sel.kind==='item'?findItem(sel.id):null;x.font='15px system-ui';x.fillStyle='#bbb';x.fillText(armed?'Plasserer: '+CAT[armed].n+' (trykk igjen for å avbryte)':sel_?'Valgt: '+CAT[sel_.type].n+' – avtrekker = flytt':'Avtrekker på objekt = plukk opp / slipp',256,ay+96);
- vrTex.needsUpdate=true}
+/* ================= HJELPERE ================= */
 function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
-const ctrls=[];let carry=null,turnCD=0;
-for(let i=0;i<2;i++){const c=renderer.xr.getController(i);const gr=renderer.xr.getControllerGrip(i);
- const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,0,-1)]),new THREE.LineBasicMaterial({color:'#ffffff'}));line.scale.z=5;c.add(line);
- const dot=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),new THREE.MeshBasicMaterial({color:'#d9632b'}));dot.visible=false;scene.add(dot);
- const body=new THREE.Mesh(new THREE.BoxGeometry(.04,.03,.12),new THREE.MeshStandardMaterial({color:'#333'}));body.position.z=.03;gr.add(body);
- const o={c,gr,line,dot,hand:null,src:null};
- c.addEventListener('connected',e=>{o.hand=e.data.handedness;o.src=e.data;if(o.hand==='left'){gr.add(vrMenu);vrMenu.position.set(0,.06,-.06);vrMenu.rotation.set(-PI/3,0,0);vrMenuDraw()}});
- c.addEventListener('disconnected',()=>{o.src=null});
- c.addEventListener('selectstart',()=>vrSelect(o));c.addEventListener('squeezestart',()=>vrRotate());
- rig.add(c);rig.add(gr);ctrls.push(o)}
-const tmpM=new THREE.Matrix4();
-function ctrlRay(o){tmpM.identity().extractRotation(o.c.matrixWorld);ray.ray.origin.setFromMatrixPosition(o.c.matrixWorld);ray.ray.direction.set(0,0,-1).applyMatrix4(tmpM);return ray}
-function vrSelect(o){ctrlRay(o);
- const mh=ray.intersectObject(vrMenu,false)[0];
- if(mh&&o.hand!=='left'||mh&&ctrls.every(k=>k===o||!k.src)){const px=mh.uv.x*512,py=(1-mh.uv.y)*600;const b=VBTN.find(b=>px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h);if(b){if(b.t){armed=armed===b.t?null:b.t;carry=null}else vrAction(b.a);vrMenuDraw()}return}
- if(carry){carry=null;changed();return}
- const h=castFrom(ray);
- if(armed){const d=CAT[armed];if(d.m==='wall'){if(h&&h.kind==='wall')placeNew(armed,{x:h.point.x,z:h.point.z,normal:h.normal})}else{const p=planeHit(ray,d.m==='ceiling'?H():0);if(p){const hp=cam.getWorldPosition(new THREE.Vector3());placeNew(armed,{x:p.x,z:p.z,face:Math.atan2(hp.x-p.x,hp.z-p.z)})}}vrMenuDraw();return}
- if(h&&h.kind==='item'){sel={kind:'item',id:h.id};carry={id:h.id,o};snapUndo();updateSelHelper();vrMenuDraw()}else{sel=null;updateSelHelper();vrMenuDraw()}}
-function vrAction(a){const it=sel&&sel.kind==='item'?findItem(sel.id):null;
- if(a==='natt'){S.night=!S.night;applyNight();changed();return}
- if(!it)return;snapUndo();
- if(a==='roter')rotItem(it,CAT[it.type].m==='wall'?PI:PI/4);
- if(a==='slett'){S.items=S.items.filter(i=>i!==it);sel=null;carry=null}
- if(a==='lys'){if(CAT[it.type].light)it.on=it.on===false}
- changed()}
-function vrRotate(){const it=sel&&sel.kind==='item'?findItem(sel.id):null;if(it){snapUndo();rotItem(it,CAT[it.type].m==='wall'?PI:PI/4);changed()}}
 function rotItem(it,a){it.rot=Math.atan2(Math.sin(it.rot+a),Math.cos(it.rot+a))}
-function vrUpdate(dt){
- const head=cam.getWorldPosition(new THREE.Vector3());
- // gulvhøyden under hodet (trapper og etasjer), samme som i vanlig gangmodus
- if(multiLv()||S.items.some(i=>STAIRT.has(i.type))||(erHus()&&site())){const fy=walkY(head.x,head.z);if(Math.abs(fy-rig.position.y)>.002){rig.position.y+=(fy-rig.position.y)*Math.min(1,dt*12);needRender=true}}
- for(const o of ctrls){if(!o.src){o.dot.visible=false;continue}const gp=o.src.gamepad;
-  if(gp&&gp.axes.length>=4){const ax=gp.axes[2],ay=gp.axes[3];
-   if(o.hand==='left'||ctrls.filter(k=>k.src).length===1){if(Math.abs(ax)>.15||Math.abs(ay)>.15){const dir=new THREE.Vector3();cam.getWorldDirection(dir);dir.y=0;dir.normalize();const right=new THREE.Vector3(-dir.z,0,dir.x);
-     const mv=dir.multiplyScalar(-ay).add(right.multiplyScalar(ax)).multiplyScalar(1.6*dt);const[nx,nz]=collide(head.x+mv.x,head.z+mv.z);rig.position.x+=nx-head.x;rig.position.z+=nz-head.z}}
-   else{turnCD-=dt;if(Math.abs(ax)>.6&&turnCD<=0){turnCD=.35;const a=-Math.sign(ax)*PI/6;const hp=cam.getWorldPosition(new THREE.Vector3());rig.rotation.y+=a;rig.updateMatrixWorld(true);const hp2=cam.getWorldPosition(new THREE.Vector3());rig.position.x+=hp.x-hp2.x;rig.position.z+=hp.z-hp2.z}}}
-  ctrlRay(o);const mh=o.hand!=='left'?ray.intersectObject(vrMenu,false)[0]:null;
-  if(mh){o.line.scale.z=mh.distance;o.dot.visible=true;o.dot.position.copy(mh.point);continue}
-  if(carry&&carry.o===o){const it=findItem(carry.id);if(it&&positionFromRay(it,ray)){const g=itemG.children.find(c=>c.userData.itemId===it.id);if(g){placeGroup(it,g);selHelper&&selHelper.update()}}}
-  const hits=ray.intersectObjects([itemG,buildG,ground],true).filter(h=>visibleChain(h.object));
-  if(hits[0]){o.line.scale.z=hits[0].distance;o.dot.visible=true;o.dot.position.copy(hits[0].point)}else{o.line.scale.z=5;o.dot.visible=false}}
-}
-async function enterVR(){
- if(!navigator.xr){vrHelp('Denne nettleseren har ikke WebXR.');return}
- let ok=false;try{ok=await navigator.xr.isSessionSupported('immersive-vr')}catch(e){}
- if(!ok){vrHelp('Fant ikke noe VR-headset (eller VR er blokkert i denne visningen).');return}
- try{const ses=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
-  renderer.xr.setReferenceSpaceType('local-floor');await renderer.xr.setSession(ses);
-  if(curView!=='3d')setView('3d');setMode3('walk');rig.rotation.y=yaw;cam.rotation.set(0,0,0);ceilG&&(ceilG.visible=true);vrMenuDraw();
-  ses.addEventListener('end',()=>{const hp=cam.getWorldPosition(new THREE.Vector3());yaw=yawS=rig.rotation.y;pitch=pitchS=0;rig.rotation.y=0;rig.position.set(hp.x,rig.position.y,hp.z);carry=null;ctrls.forEach(o=>o.dot.visible=false);size3()});
- }catch(e){vrHelp('Kunne ikke starte VR: '+e.message)}}
-function vrHelp(why){modal(`<h3>🥽 VR-modus</h3><p>${esc(why)}</p><p><b>Slik bruker du VR:</b> Åpne denne siden i nettleseren på et VR-headset (f.eks. Meta Quest-nettleseren) og trykk VR-knappen. Overfør prosjektet ditt via ☰ → «Kopier prosjekt» og «Lim inn prosjekt».</p><p><b>I VR:</b> venstre stikke = gå, høyre stikke = snu. Menyen sitter på venstre hånd – pek med høyre og trykk avtrekker for å velge møbel, pek på gulv/vegg og trykk for å plassere. Avtrekker på et objekt plukker det opp, trykk igjen for å slippe. Grep-knappen roterer.</p><div class="acts"><button class="btn acc" onclick="document.getElementById('modal').classList.remove('open')">OK</button></div>`)}
 
 /* ================= VISNINGER / VERKTØY ================= */
 let curView='plan';
@@ -3314,7 +3253,7 @@ function setView(v){const was=curView;curView=v;if(v==='3d'&&was!=='3d'&&mode3==
  cv.style.display=v==='plan'?'block':'none';c3.style.display=v==='3d'?'block':'none';
  if(v==='plan'){sizePlan();draw2D()}else{draft=[];if(tool!=='select'&&tool!=='place')setTool('select',true);size3();dirty3D=true;PREP.need=true;PREP.hold=2;prepShow(.02,'Bygger boligen …');setMode3(mode3)}
  updateOverlays();renderBar();setHint()}
-function setMode3(m){const was=mode3;mode3=m;if(m==='walk'&&was!=='walk'&&curView==='3d')startWalkPos();needRender=true;orbit.enabled=m==='orbit';if(ceilG)ceilG.visible=m==='walk'||renderer.xr.isPresenting;levelVis();facades.children.forEach(o=>{if(o.userData.ownTop)o.visible=m==='walk'||renderer.xr.isPresenting});if(m==='orbit')setOrbitHome();updateOverlays();renderBar()}
+function setMode3(m){const was=mode3;mode3=m;if(m==='walk'&&was!=='walk'&&curView==='3d')startWalkPos();needRender=true;orbit.enabled=m==='orbit';if(ceilG)ceilG.visible=m==='walk';levelVis();facades.children.forEach(o=>{if(o.userData.ownTop)o.visible=m==='walk'});if(m==='orbit')setOrbitHome();updateOverlays();renderBar()}
 function updateOverlays(){const w=curView==='3d'&&mode3==='walk';joy.style.display=w?'block':'none';$('#looktip').style.display=w?'block':'none';$('#cross').style.display='none'}
 function setTool(t,quiet){tool=t;if(t!=='measure')measA=null;if(t!=='room'&&t!=='wall')draft=[];if(t!=='calib')calib=[];if(t!=='place'&&!quiet&&armed&&curView==='plan'){armed=null}cursorW=null;renderBar();setHint();draw2D()}
 function setHint(){const h=$('#hint');let m='';
@@ -3326,7 +3265,7 @@ function setHint(){const h=$('#hint');let m='';
  else if(curView==='plan'&&tool==='measure')m=measA?'Trykk på sluttpunktet':'Trykk på to punkter for å måle (fester seg til vegger og hjørner)';
  else if(curView==='plan'&&tool==='bgmove')m='Dra for å flytte bakgrunnsbildet';
  if(!m){h.style.display='none';return}h.innerHTML=`<span>${m}</span><button id="hx">✕</button>`;h.style.display='flex';
- $('#hx').onclick=()=>{armed=null;moveMode=false;if(tool!=='select')setTool('select');setHint();vrMenuDraw()}}
+ $('#hx').onclick=()=>{armed=null;moveMode=false;if(tool!=='select')setTool('select');setHint()}}
 function renderBar(){const b=$('#bar');let h='';const B_=(id,ic,t,on,cls='')=>`<button data-b="${id}" class="${on?'on':''} ${cls}"><span>${ic}</span>${t}</button>`;
  if(VIS){b.innerHTML=B_('walk','🚶','Gå',mode3==='walk')+B_('orbit','🏠','Oversikt',mode3==='orbit')+B_('kontakt','📅','Be om visning',0,'pri');return}
  if(curView==='plan'){
@@ -3335,12 +3274,12 @@ function renderBar(){const b=$('#bar');let h='';const B_=(id,ic,t,on,cls='')=>`<
   else if(tool==='calib'||tool==='bgmove'){h=B_('cancel','✓','Ferdig',0,'pri')}
   else if(tool==='measure'){h=B_('clearMeas','🧹','Fjern mål')+B_('cancel','✓','Ferdig',0,'pri')}
   else h=B_('select','👆','Velg',tool==='select')+B_('rect','▭','Nytt rom')+B_('room','✏️','Tegn rom')+B_('wall','▮','Vegg')+B_('measure','📏','Mål',tool==='measure')+B_('add','＋','Legg til',0,'pri')+B_('fit','⤢','Tilpass')}
- else h=B_('walk','🚶','Gå',mode3==='walk')+B_('orbit','🏠','Oversikt',mode3==='orbit')+B_('lamps','💡',S.lampsOff?'Lamper av':'Lamper på',!S.lampsOff)+B_('rt','📷',PT.auto?'Fotomodus på':'Fotomodus av',PT.auto)+B_('add','＋','Legg til',0,'pri')+B_('vr','🥽','VR');
+ else h=B_('walk','🚶','Gå',mode3==='walk')+B_('orbit','🏠','Oversikt',mode3==='orbit')+B_('lamps','💡',S.lampsOff?'Lamper av':'Lamper på',!S.lampsOff)+B_('rt','📷',PT.auto?'Fotomodus på':'Fotomodus av',PT.auto)+B_('add','＋','Legg til',0,'pri');
  b.innerHTML=h}
 $('#bar').onclick=e=>{const t=e.target.closest('button');if(!t)return;const a=t.dataset.b;
  ({select:()=>setTool('select'),room:()=>{sel=null;updateSheet();setTool('room')},wall:()=>{sel=null;updateSheet();setTool('wall')},rect:rectDialog,add:openCat,fit:fitView,measure:()=>{sel=null;updateSheet();setTool('measure')},clearMeas:()=>{S.measures=[];measA=null;save();draw2D()},
   undoPt:()=>{draft.pop();renderBar();setHint();draw2D()},close:closeRoom,cancel:()=>setTool('select'),
-  walk:()=>{if(curView!=='3d')setView('3d');setMode3('walk');renderBar()},orbit:()=>{if(curView!=='3d')setView('3d');setMode3('orbit');renderBar()},kontakt:()=>visKontakt(),vr:enterVR,rt:()=>{PT.auto=!PT.auto;try{localStorage.setItem(LS+'-fotomodus',PT.auto?'på':'av')}catch(e){}if(!PT.auto&&PT.on)ptToggle();renderBar();toast(PT.auto?'📷 Fotomodus på: stå stille et øyeblikk, så tegnes bildet i fotokvalitet':'📷 Fotomodus av')},gi:giToggle,lamps:()=>{S.lampsOff=!S.lampsOff;changed();renderBar();toast(S.lampsOff?'💡 Alle lamper av – bare dagslys/månelys':'💡 Lampene er på igjen')}})[a]?.()};
+  walk:()=>{if(curView!=='3d')setView('3d');setMode3('walk');renderBar()},orbit:()=>{if(curView!=='3d')setView('3d');setMode3('orbit');renderBar()},kontakt:()=>visKontakt(),rt:()=>{PT.auto=!PT.auto;try{localStorage.setItem(LS+'-fotomodus',PT.auto?'på':'av')}catch(e){}if(!PT.auto&&PT.on)ptToggle();renderBar();toast(PT.auto?'📷 Fotomodus på: stå stille et øyeblikk, så tegnes bildet i fotokvalitet':'📷 Fotomodus av')},gi:giToggle,lamps:()=>{S.lampsOff=!S.lampsOff;changed();renderBar();toast(S.lampsOff?'💡 Alle lamper av – bare dagslys/månelys':'💡 Lampene er på igjen')}})[a]?.()};
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.v)};
 $('#bUndo').onclick=undo;
 $('#bNight').onclick=()=>{const order=['dag','ettermiddag','kveld'];S.mood=order[(order.indexOf(moodOf())+1)%3];applyNight();changed();toast(MOODS[S.mood].i+' '+MOODS[S.mood].n)};
@@ -3361,7 +3300,7 @@ function openCat(){const c=$('#cat');if(!catTab)catTab=S.models.length?'Mine mod
  const mine=catTab==='Mine modeller';
  c.innerHTML=`<h3>Legg til<button class="x" id="cx">✕</button></h3><div class="tabs">${GROUPS.map(g=>`<button data-g="${g}" class="${g===catTab?'on':''}">${g==='Mine modeller'?'📦 Mine modeller':g}</button>`).join('')}</div><div class="grid">${mine?`<button data-imp style="border-style:dashed;border-color:#d9632b"><span>＋</span>Importer 3D-modell<small>GLB · glTF · OBJ · FBX</small></button>`:''}${Object.entries(CAT).filter(([k,d])=>d.g===catTab).map(([k,d])=>{const D=d;const info=d.m==='wall'?(d.el==='stikk'||d.el==='bryter'?`${Math.round(d.y*100)} cm over gulv`:'på vegg'):d.m==='ceiling'?'i tak':`${Math.round(D.w*100)}×${Math.round(D.d*100)} cm`;return`<button data-t="${k}">${d.thumb?`<img src="${d.thumb}" style="width:72px;height:48px;object-fit:cover;border-radius:8px">`:`<span>${d.i}</span>`}${esc(d.n)}<small>${info}</small></button>`}).join('')}</div>${mine?`<p class="sub" style="margin-top:10px">Legg inn ekte produkter: last ned 3D-filen fra produsenten (ofte under «3D/BIM», «CAD» eller «AR») eller fra modellsider som Sketchfab, og velg filen her. GLB fungerer best. ${S.models.length?'<button class="btn" data-lib style="margin-left:4px">Administrer</button>':''}</p>`:''}`;
  c.classList.add('open');$('#sheet').classList.remove('open');
- c.onclick=e=>{const g=e.target.closest('[data-g]');if(g){catTab=g.dataset.g;openCat();return}if(e.target.closest('[data-imp]')){$('#mfile').click();return}if(e.target.closest('[data-lib]')){c.classList.remove('open');modelLib();return}const t=e.target.closest('[data-t]');if(t){armed=t.dataset.t;moveMode=false;c.classList.remove('open');if(curView==='plan')setTool('place',true);setHint();vrMenuDraw()}if(e.target.id==='cx')c.classList.remove('open')}}
+ c.onclick=e=>{const g=e.target.closest('[data-g]');if(g){catTab=g.dataset.g;openCat();return}if(e.target.closest('[data-imp]')){$('#mfile').click();return}if(e.target.closest('[data-lib]')){c.classList.remove('open');modelLib();return}const t=e.target.closest('[data-t]');if(t){armed=t.dataset.t;moveMode=false;c.classList.remove('open');if(curView==='plan')setTool('place',true);setHint()}if(e.target.id==='cx')c.classList.remove('open')}}
 
 /* --- valgt-panel */
 function delSel(){if(VIS||!sel||sel.kind!=='item')return;snapUndo();S.items=S.items.filter(i=>i.id!==sel.id);sel=null;changed()}
@@ -3434,7 +3373,7 @@ function openMenu(){modal(`<h3>Prosjekt</h3><div class="menu-list">
   Lysstyrke lamper<input type="range" id="lbr" min="0.3" max="2" step="0.05" value="${S.lampBright??1}" style="width:100%">
   Eksponering (lysere/mørkere bilde): <b id="evv">${(S.ev||0)>0?'+':''}${S.ev||0}</b><input type="range" id="ev" min="-2" max="3" step="0.25" value="${S.ev||0}" style="width:100%"></div>
  <button data-m="lib">📦 Mine 3D-modeller (${S.models.length})</button>
- <hr><button data-m="copy">📋 Kopier prosjekt (for å flytte til VR-briller)</button><button data-m="paste">📥 Lim inn prosjekt</button>
+ <hr><button data-m="copy">📋 Kopier prosjekt</button><button data-m="paste">📥 Lim inn prosjekt</button>
  <hr><button data-m="ex">🏢 Last eksempel-leilighet (2-roms)</button><button data-m="new">🗒️ Start helt tomt</button><button data-m="help">❓ Slik bruker du appen</button></div>
  ${site()?'<p style="font-size:11.5px;margin:8px 8px 0">Nabolag og gater: kartdata © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-bidragsytere</a> (ODbL).</p>':''}
  <div class="acts"><button class="btn" id="mc">Lukk</button></div>`,m=>{
@@ -3494,7 +3433,6 @@ function help(){modal(`<h3>Slik bruker du LettVisning</h3>
  <p><b>3. Møbler, lamper og stikkontakter.</b> «Legg til», velg, og trykk der det skal stå. Møbler fester seg automatisk med ryggen mot veggen. Trykk på noe for å endre farge, mål, høyde eller slette.</p>
  <p><b>Ekte produkter:</b> Under «Legg til» → 📦 Mine modeller kan du importere 3D-filer (GLB, glTF, OBJ, FBX) av ekte møbler, lamper og stikkontakter fra produsenter eller modellsider. Skriv inn ekte mål, så blir størrelsen riktig.</p>
  <p><b>4. Gå rundt.</b> Bytt til «3D / Gå». Bruk joysticken (eller WASD) og dra for å se deg rundt. «Oversikt» viser hele boligen ovenfra. 🌙 viser hvordan lyset blir om kvelden.</p>
- <p><b>5. VR.</b> Åpne siden i nettleseren på VR-brillene og trykk 🥽 VR.</p>
  <p>Alt lagres automatisk i denne nettleseren. ↶ angrer.</p><div class="acts"><button class="btn acc" onclick="document.getElementById('modal').classList.remove('open')">Kom i gang</button></div>`)}
 $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{
   // nedskaler for lagring
@@ -3505,7 +3443,7 @@ function fitBg(){if(!S.bg||!bgImg)return;const r=cv.getBoundingClientRect();cons
 
 /* ================= IMPORT AV 3D-MODELLER ================= */
 const memStore=new Map();let dbP=null;
-function idb(){if(!dbP)dbP=new Promise((res,rej)=>{try{const r=indexedDB.open('oppussing-vr',1);r.onupgradeneeded=()=>r.result.createObjectStore('models');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return dbP}
+function idb(){if(!dbP)dbP=new Promise((res,rej)=>{try{const r=indexedDB.open('oppussing-vr',1)/* intern databasenavn beholdes, ellers forsvinner importerte 3D-modeller */;r.onupgradeneeded=()=>r.result.createObjectStore('models');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return dbP}
 async function idbOp(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('models',mode);const st=tx.objectStore('models');const rq=fn(st);tx.oncomplete=()=>res(rq&&rq.result);tx.onerror=()=>rej(tx.error)})}
 async function storeFiles(id,files){memStore.set(id,files);try{await idbOp('readwrite',st=>st.put(files,id))}catch(e){toast('Kunne ikke lagre modellen permanent i nettleseren – den forsvinner ved omlasting')}}
 async function getFiles(id){if(memStore.has(id))return memStore.get(id);try{const f=await idbOp('readonly',st=>st.get(id));if(f)memStore.set(id,f);return f}catch(e){return null}}
@@ -3596,7 +3534,7 @@ const PT={on:false,ready:false,busy:false,dirty:true,lib:null,ptr:null,quad:null
  auto:(()=>{try{return !matchMedia('(pointer:coarse)').matches&&localStorage.getItem(LS+'-fotomodus')==='på'}catch(e){return false}})()};
 const pthud=$('#pthud');
 async function ptToggle(){if(PT.on){PT.on=false;pthud.style.display='none';needRender=true;renderBar();return}
- if(renderer.xr.isPresenting)return;PT.on=true;renderBar();pthud.style.display='block';pthud.textContent='✨ Laster ray tracing …';
+ PT.on=true;renderBar();pthud.style.display='block';pthud.textContent='✨ Laster ray tracing …';
  try{await ptInit();PT.dirty=true;ptSize();needRender=true}
  catch(e){console.error(e);PT.on=false;pthud.style.display='none';renderBar();toast('Ray tracing støttes ikke på denne enheten: '+(e.message||e))}}
 function ptReset(){const d=o=>{try{o&&o.dispose&&o.dispose()}catch(e){}};if(PT.ptr){d(PT.ptr.material);d(PT.ptr);PT.ptr=null}for(const k of["am","lmm"]){d(GI[k]);GI[k]=null}for(const k of["br","lbr","vbr"]){d(GI[k]);GI[k]=null}PT.dirty=true;PT.ready=false;PT.scene=null}
@@ -3624,7 +3562,7 @@ function giLoad(){try{const j=JSON.parse(localStorage.getItem(LS+'-gi')||'null')
 async function giToggle(){if(GI.busy)return;if(!giFits()||giStale()||!LM.ok)return giBake();GI.on=!GI.on;applyNight();rebuildItems();giSave();renderBar();toast(GI.on?'🌤️ Ferdigberegnet lys på':'🌤️ Ferdigberegnet lys av (enkelt lys)')}
 const BAKE_FAST=/[?&]fullfart/.test(location.search),BAKE_BURST=BAKE_FAST?30:12;
 const bakePause=t0=>new Promise(r=>setTimeout(r,BAKE_FAST?0:Math.min(250,Math.max(10,(performance.now()-t0)*1.5))));
-async function giBake(){if(GI.busy||renderer.xr.isPresenting)return;GI.busy=true;if(PT.on)await ptToggle();renderBar();
+async function giBake(){if(GI.busy)return;GI.busy=true;if(PT.on)await ptToggle();renderBar();
  pthud.style.display='block';pthud.textContent='🌤️ Beregner lyset for boligen …';await new Promise(r=>setTimeout(r,30));
  try{ptReset();await ptInit();
   // taket og eget bygg over leiligheten må være med i lysmodellen selv om de er skjult i oversikten
@@ -3740,7 +3678,7 @@ function ptBuild(){if(PT.busy)return;PT.busy=true;const tmpG=[];
   PT.dirty=false;PT.ready=true;PT.ptr.reset()}
  catch(e){console.error(e);toast('Kunne ikke bygge ray tracing-scenen: '+(e.message||e));PT.on=false;pthud.style.display='none';renderBar()}
  finally{PT.busy=false;tmpG.forEach(g=>g.dispose())}}
-function ptFrame(c,now){if(!PT.on||renderer.xr.isPresenting)return false;
+function ptFrame(c,now){if(!PT.on)return false;
  c.updateMatrixWorld();const k=c.matrixWorld.elements.map(v=>v.toFixed(4)).join(',')+c.aspect;if(k!==PT.camKey){PT.camKey=k;PT.lastMove=now;if(PT.ptr)PT.ptr.reset()}
  if(now-PT.lastMove<(PT.auto?900:350)||!PT.ptr){pthud.style.display=PT.auto?'none':'block';pthud.textContent='✨ Ray tracing – stå stille';return false}pthud.style.display='block';
  if(PT.dirty){pthud.textContent='✨ Bygger lysmodell …';ptBuild();if(!PT.ready)return false}
@@ -3752,27 +3690,27 @@ function ptFrame(c,now){if(!PT.on||renderer.xr.isPresenting)return false;
 let lastT=performance.now();
 let lsT=0;
 let perfAcc=0,perfN=0,lastRendered=false;THREE.DefaultLoadingManager.onLoad=()=>needRender=true;setInterval(()=>needRender=true,1500);
-const LOOP_=(t)=>{const now=performance.now();const dt=Math.min(.05,(now-lastT)/1000);lastT=now;const xr=renderer.xr.isPresenting;
- if(!xr&&curView!=='3d')return;
- if(!xr&&PREP.hold>0){PREP.hold--;return}// la lastelinjen bli tegnet før den tunge ombyggingen
- if(!xr&&PREP.on)return;// klargjøringen pågår: ingen ombygging eller tegning før den er ferdig
- if(dirty3D){rebuild();if(!xr&&!PREP.on&&newMats()>8)PREP.need=true}
- if(xr)vrUpdate(dt);else if(mode3==='walk')walkUpdate(dt);else if(orbit.update())needRender=true;
- const c=xr||mode3==='walk'?cam:camO;if(!xr&&PREP.need){PREP.need=false;prep3D(c);return}placeDiscs(c);aeUpdate(c,dt);
- if(sunAnim&&!xr){S.sunTime+=dt*.8;const end=site()?22.5:18.5;if(S.sunTime>=end){S.sunTime=end;sunAnim=false;pthud.style.display='none';save();toast('☀️ Dagen er spilt av')}
+const LOOP_=(t)=>{const now=performance.now();const dt=Math.min(.05,(now-lastT)/1000);lastT=now;
+ if(curView!=='3d')return;
+ if(PREP.hold>0){PREP.hold--;return}// la lastelinjen bli tegnet før den tunge ombyggingen
+ if(PREP.on)return;// klargjøringen pågår: ingen ombygging eller tegning før den er ferdig
+ if(dirty3D){rebuild();if(!PREP.on&&newMats()>8)PREP.need=true}
+ if(mode3==='walk')walkUpdate(dt);else if(orbit.update())needRender=true;
+ const c=mode3==='walk'?cam:camO;if(PREP.need){PREP.need=false;prep3D(c);return}placeDiscs(c);aeUpdate(c,dt);
+ if(sunAnim){S.sunTime+=dt*.8;const end=site()?22.5:18.5;if(S.sunTime>=end){S.sunTime=end;sunAnim=false;pthud.style.display='none';save();toast('☀️ Dagen er spilt av')}
   else{pthud.style.display='block';pthud.textContent='☀️ kl '+String(Math.floor(S.sunTime)).padStart(2,'0')+':'+String(Math.floor(S.sunTime%1*60)).padStart(2,'0')+'  (☰ for å stoppe)'}applyNight()}poolFade(dt);lsT-=dt;if(lsT<=0){lsT=.4;poolAssign(c);pickShadowLights(c);if(!xr)probeUpdate(c)}
  // tegn bare når noe har endret seg (sparer batteri og varme)
  // fotomodus: står kameraet stille i 1,2 s, slås ray tracing på; bevegelse gir vanlig grafikk til du står stille igjen
- if(PT.auto&&!PT.on&&!xr&&curView==='3d'&&Q==='hoy'&&!GI.busy&&!PREP.on&&!PREP.need&&!document.hidden&&lysOk()){c.updateMatrixWorld();const k_=c.matrixWorld.elements.map(v=>v.toFixed(3)).join(',');if(k_!==PT.autoKey){PT.autoKey=k_;PT.autoT=now}else if(now-PT.autoT>1200&&!PT.autoBusy){PT.autoBusy=true;ptToggle().finally(()=>{PT.autoBusy=false})}}
- if(PT.on&&!xr){if(dirty3D)rebuild();const r_=ptFrame(c,now);if(r_===true){lastRendered=false;return}if(r_==='idle')return}
- if(!xr&&!needRender){lastRendered=false;return}
+ if(PT.auto&&!PT.on&&curView==='3d'&&Q==='hoy'&&!GI.busy&&!PREP.on&&!PREP.need&&!document.hidden&&lysOk()){c.updateMatrixWorld();const k_=c.matrixWorld.elements.map(v=>v.toFixed(3)).join(',');if(k_!==PT.autoKey){PT.autoKey=k_;PT.autoT=now}else if(now-PT.autoT>1200&&!PT.autoBusy){PT.autoBusy=true;ptToggle().finally(()=>{PT.autoBusy=false})}}
+ if(PT.on){if(dirty3D)rebuild();const r_=ptFrame(c,now);if(r_===true){lastRendered=false;return}if(r_==='idle')return}
+ if(!needRender){lastRendered=false;return}
  needRender=false;
- if(!xr&&lastRendered){perfAcc+=dt;perfN++;if(perfN>=40){const a=perfAcc/perfN;const base=prBase();
+ if(lastRendered){perfAcc+=dt;perfN++;if(perfN>=40){const a=perfAcc/perfN;const base=prBase();
   if(a>.042&&prCur>.6){prCur=Math.max(.6,prCur-.15);renderer.setPixelRatio(prCur);size3()}else if(a<.02&&prCur<base){prCur=Math.min(base,prCur+.1);renderer.setPixelRatio(prCur);size3()}perfAcc=perfN=0}}
  lastRendered=true;
  if(perfOn){renderer.info.autoReset=false;renderer.info.reset()}else renderer.info.autoReset=true;
- const k=!xr&&getComposer(c);if(k)k.render(dt);else renderer.render(scene,c);if(perfOn)perfTick(now)};
-let loopErr=0;renderer.setAnimationLoop(window.__loopFn=t=>{try{if(renderer.getRenderTarget()&&!renderer.xr.isPresenting)renderer.setRenderTarget(null);LOOP_(t)}catch(e){if(loopErr++<5)console.error('3D-feil fanget:',e);try{renderer.setRenderTarget(null)}catch(_){}needRender=true}});
+ const k=getComposer(c);if(k)k.render(dt);else renderer.render(scene,c);if(perfOn)perfTick(now)};
+let loopErr=0;renderer.setAnimationLoop(window.__loopFn=t=>{try{if(renderer.getRenderTarget())renderer.setRenderTarget(null);LOOP_(t)}catch(e){if(loopErr++<5)console.error('3D-feil fanget:',e);try{renderer.setRenderTarget(null)}catch(_){}needRender=true}});
 const PF={n:0,t:performance.now()};function perfTick(now){PF.n++;if(now-PF.t<500)return;const fps=PF.n*1000/(now-PF.t),i=renderer.info.render;PF.n=0;PF.t=now;
  $('#perf').textContent=`${fps.toFixed(0)} bilder/s
 ${i.calls} tegnekall
