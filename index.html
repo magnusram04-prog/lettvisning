@@ -248,7 +248,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v72',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v73',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -1575,6 +1575,13 @@ function artTex(kind,w,h){const N=512,Mh=Math.round(N*h/w);return cvTex(N,Mh,(x,
   x.lineCap='round';x.strokeStyle='#8c7360';x.lineWidth=26;const pth=()=>{x.beginPath();x.moveTo(W*.12,H*.52);x.bezierCurveTo(W*.4,H*.3,W*.95,H*.45,W*.7,H*.62);x.bezierCurveTo(W*.5,H*.75,W*.3,H*.6,W*.55,H*.5);x.stroke()};pth();x.strokeStyle='#fbf8f3';x.lineWidth=20;pth()}
  else if(kind===2){x.fillStyle='#f5f3f0';x.fillRect(0,0,W,H);const cx=W*.5,cy=H*.48;for(let i=0;i<46;i++){const a=rnd01()*7,r=W*(.04+.2*rnd01()*rnd01());x.fillStyle=['#d995a1','#e9b8c0','#b86f7c','#f2d3d7'][i%4];x.beginPath();x.ellipse(cx+Math.cos(a)*r*.7,cy+Math.sin(a)*r*.6,W*.08,W*.05,a,0,7);x.fill()}
   x.strokeStyle='#2a2a2a';x.lineWidth=6;x.beginPath();x.moveTo(cx,cy+W*.15);x.bezierCurveTo(cx-W*.1,H*.75,cx+W*.12,H*.8,cx-W*.05,H*.95);x.stroke();x.fillStyle='#2a2a2a';x.beginPath();x.ellipse(cx-W*.12,cy-W*.28,W*.06,W*.12,.6,0,7);x.fill()}
+ else if(kind==='pop'){// popkunst-portrett (Warhol-aktig): sterk bakgrunn, gult hår, lyst ansikt, røde lepper, turkis skygge
+  x.fillStyle='#e8417f';x.fillRect(0,0,W,H);x.fillStyle='#f6d52b';x.beginPath();x.ellipse(W*.5,H*.42,W*.36,H*.33,0,0,7);x.fill();
+  x.fillStyle='#f3c6b4';x.beginPath();x.ellipse(W*.5,H*.52,W*.24,H*.27,0,0,7);x.fill();x.fillStyle='#3ec6c9';x.beginPath();x.ellipse(W*.38,H*.42,W*.07,H*.03,0,0,7);x.ellipse(W*.62,H*.42,W*.07,H*.03,0,0,7);x.fill();
+  x.fillStyle='#d1182f';x.beginPath();x.ellipse(W*.5,H*.66,W*.09,H*.035,0,0,7);x.fill();x.fillStyle='#2a2a2a';x.fillRect(W*.33,H*.4,W*.1,H*.012);x.fillRect(W*.57,H*.4,W*.1,H*.012)}
+ else if(kind==='farger'){// fargerikt abstrakt maleri med brede strøk
+  x.fillStyle='#f4efe6';x.fillRect(0,0,W,H);const C=['#e63946','#f4a261','#2a9d8f','#264653','#e9c46a','#8338ec','#3a86ff','#ff006e'];
+  for(let i=0;i<34;i++){x.strokeStyle=C[i%C.length];x.globalAlpha=.85;x.lineWidth=14+rnd01()*34;x.lineCap='round';x.beginPath();const sx=rnd01()*W,sy=rnd01()*H;x.moveTo(sx,sy);x.quadraticCurveTo(rnd01()*W,rnd01()*H,sx+(rnd01()-.5)*W*.7,sy+(rnd01()-.5)*H*.7);x.stroke()}x.globalAlpha=1}
  else{x.fillStyle='#f1ece4';x.fillRect(0,0,W,H);x.strokeStyle='#8b7a68';x.lineWidth=3;for(let i=0;i<7;i++){x.beginPath();x.moveTo(W*.5,H*.9);x.quadraticCurveTo(W*(.2+i*.1),H*.5,W*(.25+i*.08),H*(.15+rnd01()*.2));x.stroke()}}
  for(let i=0;i<9000;i++){x.fillStyle=`rgba(0,0,0,${rnd01()*.025})`;x.fillRect(rnd01()*W,rnd01()*H,2,2)}},[1,1],true)}
 function frameArt(g,w,h,kind,frameCol,mount=.05){const F=mat(frameCol,{roughness:.5});const f=.022,dp=.03;
@@ -1728,7 +1735,7 @@ Object.assign(B,{
   if(it.hob){rbx(g,.58,.006,.51,new THREE.MeshPhysicalMaterial({color:'#0c0c0d',roughness:.08,clearcoat:1}),0,h+.003,0,.003);for(const[x,z,r]of[[-.15,-.12,.09],[.15,-.12,.07],[-.15,.12,.07],[.15,.12,.1]]){const c=msh(g,new THREE.RingGeometry(r-.003,r,48),mat('#555'),x,h+.0065,z);c.rotation.x=-PI/2}}
   if(it.deco)fruitBowl(g,0,h,0)},
  kjokkenoy(g,w,d,h,M,it){const cab=.6,s=new THREE.Group();B.kjokken2(s,w-.02,cab,h-.04,M,{color:it.color});s.position.z=-d/2+cab/2;s.rotation.y=PI;g.add(s);
-  bx(g,w-.02,h-.04,.02,WHITEGL,0,(h-.04)/2,-d/2+cab+.01);bx(g,.02,h-.04,cab+.02,WHITEGL,w/2-.01,(h-.04)/2,-d/2+cab/2+.01);bx(g,w,.04,d,TOPD,0,h-.02,0);{const P=new THREE.MeshStandardMaterial({color:'#f6ecdb',map:PLY,roughness:.7});for(const s of[-1,1]){bx(g,w+.004,.04,.003,P,0,h-.02,s*(d/2+.0015));bx(g,.003,.04,d,P,s*(w/2+.0015),h-.02,0)}}
+  bx(g,w-.02,h-.04,.02,WHITEGL,0,(h-.04)/2,-d/2+cab+.01);bx(g,.02,h-.04,cab+.02,WHITEGL,w/2-.01,(h-.04)/2,-d/2+cab/2+.01);bx(g,w,.04,d,it.top==='hvit'?mat('#f1f0ec',{roughness:.2}):it.top==='eik'?OAK('#cdae86'):TOPD,0,h-.02,0);{const P=new THREE.MeshStandardMaterial({color:'#f6ecdb',map:PLY,roughness:.7});for(const s of[-1,1]){bx(g,w+.004,.04,.003,P,0,h-.02,s*(d/2+.0015));bx(g,.003,.04,d,P,s*(w/2+.0015),h-.02,0)}}
   if(it.deco!==0){fruitBowl(g,-w*.1,h,-d*.12);cyl(g,.16,.16,.018,matFor('wood','#c9a575'),-w*.36,h+.009,-d*.25);bx(g,.2,.03,.14,mat('#d98f9a',{roughness:.7}),-w*.36,h+.033,-d*.25);bx(g,.18,.025,.12,mat('#f2eee8',{roughness:.7}),-w*.36,h+.061,-d*.25);lathe(g,[[0,0],[.04,0],[.05,.06],[.03,.13],[.015,.15],[0,.15]],mat('#c97f86',{roughness:.2}),-w*.4,h+.016,-d*.28,24);
    for(let i=0;i<5;i++)rod(g,[-w*.4,h+.15,-d*.28],[-w*.4+(rnd01()-.5)*.14,h+.38,-d*.28+(rnd01()-.5)*.1],.0025,.002,mat('#4a3a2a'));cyl(g,.022,.022,.1,mat('#2a2a2a',{roughness:.3}),w*.3,h+.05,-d*.3);cyl(g,.022,.022,.1,mat('#f2f2f0',{roughness:.3}),w*.3+.06,h+.05,-d*.3)}},
  vifte_pyramide(g,w,d,h,M,it){const can=.08,py=.24;bx(g,w,can,d,STEEL2,0,-h/2+can/2,d/2);
@@ -2281,7 +2288,7 @@ Object.assign(B,{
   const D=new THREE.MeshStandardMaterial({color:'#f4f2ee',roughness:.6,bumpMap:CLAD,bumpScale:1.5});D.userData.own=1;for(const sx of[-1,1])bx(g,2.4,2.1,.04,D,sx*1.55,1.05,d/2+.01);const T_=mat('#9a2b2b',{roughness:.6});for(const sx of[-1,1])bx(g,2.55,.08,.06,T_,sx*1.55,2.14,d/2+.03);
   const r=new THREE.Group();r.position.y=wh;g.add(r);B.hustak(r,w+.5,d+.6,h-wh,M,{color:'#ffffff',trim:'#9a2b2b'})},
  grus(g,w,d,h,M,it){const t=GRAVEL.clone(),b=GRAVEL.clone();for(const x of[t,b]){x.needsUpdate=true;x.repeat.set(w/1.5,d/1.5)}t.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshStandardMaterial({map:t,bumpMap:b,bumpScale:3,roughness:1});m.userData.own=1;const p=msh(g,new THREE.PlaneGeometry(w,d),m,0,.006,0);p.rotation.x=-PI/2},
- flisespeil(g,w,d,h,M,it){if(it&&it.color){const c=new THREE.Color(it.color),gr='#'+c.clone().offsetHSL(0,0,-.12).getHexString();const t=cvTex(256,128,(x,W,H)=>{x.fillStyle=gr;x.fillRect(0,0,W,H);for(let j=-1;j<9;j++)for(let i=-1;i<17;i++){const k=c.clone().offsetHSL(0,0,(rnd01()-.5)*.06);x.fillStyle='#'+k.getHexString();if(it.fiskeben){x.save();x.translate(i*16+(j%2)*8,j*16);x.rotate(((i+j)%2?1:-1)*Math.PI/4);x.fillRect(-10,-3,20,6);x.restore()}else x.fillRect(i*16+1,j*16+1,14,14)}},[w/.6,h/.3],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.25});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2);return}const t=cvTex(256,128,(x,W,H)=>{x.fillStyle='#bfb29a';x.fillRect(0,0,W,H);for(let j=0;j<4;j++)for(let i=0;i<8;i++){const v=rnd01();x.fillStyle=v<.5?'#ead9b8':'#e2cfa9';x.fillRect(i*32+1,j*32+1,30,30);x.strokeStyle='rgba(150,110,70,.35)';x.beginPath();x.arc(i*32+16,j*32+16,8,0,7);x.stroke()}},[w/1.2,h/.6],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.3});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2)},
+ flisespeil(g,w,d,h,M,it){if(it&&it.stal){const m=new THREE.MeshStandardMaterial({color:it.color||'#c6c9cb',metalness:.8,roughness:.32});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2);return}if(it&&it.color){const c=new THREE.Color(it.color),gr='#'+c.clone().offsetHSL(0,0,-.12).getHexString();const t=cvTex(256,128,(x,W,H)=>{x.fillStyle=gr;x.fillRect(0,0,W,H);for(let j=-1;j<9;j++)for(let i=-1;i<17;i++){const k=c.clone().offsetHSL(0,0,(rnd01()-.5)*.06);x.fillStyle='#'+k.getHexString();if(it.fiskeben){x.save();x.translate(i*16+(j%2)*8,j*16);x.rotate(((i+j)%2?1:-1)*Math.PI/4);x.fillRect(-10,-3,20,6);x.restore()}else x.fillRect(i*16+1,j*16+1,14,14)}},[w/.6,h/.3],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.25});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2);return}const t=cvTex(256,128,(x,W,H)=>{x.fillStyle='#bfb29a';x.fillRect(0,0,W,H);for(let j=0;j<4;j++)for(let i=0;i<8;i++){const v=rnd01();x.fillStyle=v<.5?'#ead9b8':'#e2cfa9';x.fillRect(i*32+1,j*32+1,30,30);x.strokeStyle='rgba(150,110,70,.35)';x.beginPath();x.arc(i*32+16,j*32+16,8,0,7);x.stroke()}},[w/1.2,h/.6],true);const m=new THREE.MeshStandardMaterial({map:t,roughness:.3});m.userData.own=1;bx(g,w,h,d,m,0,0,d/2)},
  overbygg(g,w,d,h,M,it){const P=mat(it.color||CAT.overbygg.col,{roughness:.5});for(const sx of[-1,1])bx(g,.12,h,.12,P,sx*(w/2-.06),h/2,d/2-.06);bx(g,w,.2,.12,P,0,h-.1,d/2-.06)},
 });
 {const kb=B.kjokken2;B.kjokken2=function(g,w,d,h,M,it){kb(g,w,d,h,M,it);if(!it.oak)return;const O=OAK(it.oak);g.traverse(o=>{if(o.isMesh&&o.geometry.parameters&&o.geometry.parameters.depth===.018)o.material=O})}}
@@ -2934,6 +2941,38 @@ function piAnalyser(c,W,H,BRA){const N=W*H,d=c.getContext('2d').getImageData(0,0
    for(const[p,l0,q0]of rad.values()){let par=false;for(let dp=2;dp<=Math.round(wpx*1.6)&&!par;dp++)for(const sg of[-1,1]){for(const[p2,l2,q2]of[...rad.values()].filter(r=>r[0]===p+sg*dp)){if(Math.abs(l2-l0)<=4&&Math.abs(q2-q0)<=4)par=true}}
     if(par)for(let k=l0+1;k<q0;k++){const j=ix(p,k);if(!brI[j]&&!brU[j])brG[j]=1}}}}
  const barr=new Uint8Array(N);for(let i=0;i<N;i++)barr[i]=wall[i]||brI[i]||brU[i]||brG[i]?1:0;
+ // nakke-kutt (2026-11-09): åpning uten dør, f.eks. gang/entré mot stue. Der en smal flate (0,6–1,6 m mellom vegger) munner ut i en
+ // flate som er minst 0,35 m bredere, legges en bro i munningen, så det blir to rom med en åpning mellom. Bare når begge deler blir minst 1,5 m².
+ if(PI_.nakke!==false){const fr=new Uint8Array(N);for(let i=0;i<N;i++)fr[i]=fp[i]&&!barr[i]?1:0;
+  const Lmin=Math.round(.75*ppm),Lmax=Math.round(2*ppm),Lsmal=Math.round(1.45*ppm),hopp=Math.round(.35*ppm),minA=1.5*ppm*ppm,dybde=Math.round(1*ppm),smalDyp=Math.round(1.1*ppm),kand=[];
+  for(const hor of[true,false]){const A_=hor?H:W,B_=hor?W:H,ix=(p,q)=>hor?p*W+q:q*W+p;
+   const runAt=(p,q)=>{if(p<0||p>=A_||!fr[ix(p,q)])return 0;let a=q,b=q;while(a>0&&fr[ix(p,a-1)])a--;while(b<B_-1&&fr[ix(p,b+1)])b++;return b-a+1};
+   for(let p=1;p<A_-1;p++){let q=0;while(q<B_){if(!fr[ix(p,q)]){q++;continue}const a=q;while(q<B_&&fr[ix(p,q)])q++;const b=q-1,L=b-a+1;if(L<Lmin||L>Lmax)continue;
+    if(a===0||b===B_-1||!barr[ix(p,a-1)]||!barr[ix(p,b+1)])continue;const m=(a+b)>>1;
+    // den brede siden må være bred minst 1 m innover (en dørnisje eller skapfront er grunnere og gir ikke kutt)
+    for(const s of[-1,1]){const L2=runAt(p+s,m),L0=runAt(p-s,m);if(!(L2>=L+hopp&&L0>0&&Math.abs(L0-L)<=2))continue;
+     let dyp=true;for(let k=2;k<=dybde;k+=2)if(runAt(p+s*k,m)<L+hopp){dyp=false;break}
+     // den smale siden må også gå minst 0,9 m innover med omtrent samme bredde (en gang eller entré, ikke et grunt skap)
+     for(let k=2;k<=smalDyp&&dyp;k+=2){const Lk=runAt(p-s*k,m);if(!Lk||Math.abs(Lk-L)>hopp)dyp=false}
+     if(dyp)kand.push({hor,p,a,b,L,s,m})}}}}
+  kand.sort((x,y)=>x.L-y.L);
+  const mk=new Int32Array(N),st=new Int32Array(N);let merke=0;const tatt=[],aksept=[];
+  const fyll=(start,stopp)=>{merke++;let sp=0,n=0;mk[start]=merke;st[sp++]=start;while(sp){const i=st[--sp];if(i===stopp)return -1;n++;const x=i%W;
+    for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j<0||j>=N||!fr[j]||mk[j]===merke)continue;mk[j]=merke;st[sp++]=j}}return n};
+  for(const c of kand){const{hor,p,a,b,s,m}=c,ix=(pp,qq)=>hor?pp*W+qq:qq*W+pp;
+   const mid=hor?[m,p]:[p,m];if(tatt.some(t=>Math.hypot(t[0]-mid[0],t[1]-mid[1])<.5*ppm))continue;
+   const lin=[];for(let q=a;q<=b;q++){lin.push(ix(p,q));const j=ix(p-s,q);if(fr[j])lin.push(j)}
+   if(lin.some(i=>!fr[i]))continue;for(const i of lin)fr[i]=0;
+   const s1=ix(p+s,m),s2=ix(p-2*s,m);let ok=fr[s1]&&fr[s2];
+   if(ok){const n1=fyll(s1,s2);ok=n1>=minA;if(ok){const n2=fyll(s2,-1);ok=n2>=minA}}
+   if(ok){tatt.push(mid);aksept.push({lin,s1,s2,L:c.L})}else for(const i of lin)fr[i]=1}
+  // etterkontroll: hver bit som et kutt lager skal til slutt være minst 1,5 m²; ellers tas kuttet bort igjen (skap og hyller deles ikke)
+  for(let runde=0;runde<6;runde++){let endret=false;const lb=new Int32Array(N),sz=[0];let nl=0;
+   for(let i=0;i<N;i++){if(!fr[i]||lb[i])continue;nl++;let sp=0,n=0;lb[i]=nl;st[sp++]=i;while(sp){const k=st[--sp];n++;const x=k%W;for(const j of[x>0?k-1:-1,x<W-1?k+1:-1,k-W,k+W]){if(j<0||j>=N||!fr[j]||lb[j])continue;lb[j]=nl;st[sp++]=j}}sz.push(n)}
+   for(const c of aksept){if(c.av)continue;c.a1=sz[lb[c.s1]];c.a2=sz[lb[c.s2]];const bred=c.L>Lsmal&&(Math.max(c.a1,c.a2)<15*ppm*ppm||Math.min(c.a1,c.a2)<2.5*ppm*ppm);if(bred||sz[lb[c.s1]]<minA||sz[lb[c.s2]]<minA){c.av=1;for(const i of c.lin)fr[i]=1;endret=true}}
+   if(!endret)break}
+  for(const c of aksept)if(!c.av)for(const i of c.lin){brI[i]=1;barr[i]=1}
+  PI_.nakkeKutt=aksept.filter(c=>!c.av).length;PI_.nakkeInfo=aksept.filter(c=>!c.av).map(c=>[+(c.L/ppm).toFixed(2),+(c.a1/ppm/ppm).toFixed(1),+(c.a2/ppm/ppm).toFixed(1)])}
  // rommene: sammenhengende flater innenfor bygningen
  const free=new Uint8Array(N);for(let i=0;i<N;i++)free[i]=fp[i]&&!barr[i]?1:0;
  const inne=new Uint8Array(N);{const rl=new Int32Array(H).fill(-1),rr=new Int32Array(H).fill(-1),ct=new Int32Array(W).fill(-1),cb=new Int32Array(W).fill(-1);
