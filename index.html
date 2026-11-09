@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>LettVisning – boligen i 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 :root{--bg:#f6f4f0;--ink:#1f2328;--mut:#6b6f76;--line:#dedad3;--acc:#d9632b;--acc2:#2b6cd9;--card:#fff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -83,8 +84,29 @@ html.vis #bUndo,html.vis #bMenu,html.vis #bNight,html.vis #seg,html.vis #sheet,h
 #mkort{position:absolute;left:10px;bottom:10px;z-index:5;display:flex;align-items:center;gap:10px;max-width:calc(100% - 20px);padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.94);box-shadow:0 2px 12px rgba(0,0,0,.15);font:13px system-ui,sans-serif;color:#1f2328}
 #mkort img{height:34px;max-width:90px;object-fit:contain}#mkort .mk-t{display:flex;flex-direction:column;min-width:0}#mkort .mk-t b,#mkort .mk-t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#mkort .mk-t span{color:#6b6f76;font-size:12px}
 #mkort .btn{white-space:nowrap}#modal a.btn{display:inline-block;text-decoration:none;color:inherit;margin:3px 6px 3px 0}#modal a.btn.acc{color:#fff}
-html.vis #joy{bottom:84px}
-@media (max-width:520px){#mkort{left:6px;right:6px;bottom:6px}#mkort img{height:28px}#mkort .btn{display:none}}
+html.vis #joy{bottom:96px}
+/* meglervisning: rolig og redaksjonell – mørk blekk-farge i stedet for oransje, strekikoner, Figtree */
+html.vis{--v-ink:#1d2421;--v-mut:#68716c;--v-line:#e2e4df;--v-card:#ffffff;--v-bg:#f4f4f1;--v-pri:#1d2421;--v-pri-fg:#ffffff;--v-font:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif}
+html.vis body{font-family:var(--v-font)}
+html.vis #bar{gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--v-line);background:var(--v-card);align-items:center;overflow:visible}
+html.vis #bar button{flex:0 0 auto;min-width:0;flex-direction:row;gap:7px;padding:10px 14px;border-radius:8px;font:600 14px/1 var(--v-font);color:var(--v-mut);letter-spacing:.005em}
+html.vis #bar button svg{width:18px;height:18px;flex:none}
+html.vis #bar button.on{background:#eef0ec;color:var(--v-ink)}
+html.vis #bar button.pri{margin-left:auto;background:var(--v-pri);color:var(--v-pri-fg);padding:11px 18px}
+html.vis #bar button:focus-visible{outline:2px solid var(--v-ink);outline-offset:2px}
+html.vis #mkort{left:12px;bottom:12px;gap:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.96);border:1px solid var(--v-line);box-shadow:0 1px 2px rgba(20,24,22,.06);font:13px/1.3 var(--v-font);color:var(--v-ink)}
+html.vis #mkort .mk-t{gap:2px}html.vis #mkort .mk-f{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--v-mut)}
+html.vis #mkort .mk-n{font-size:14px;font-weight:600}html.vis #mkort .mk-r{font-size:12px;color:var(--v-mut)}
+html.vis #joy{width:108px;height:108px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.75);backdrop-filter:blur(3px)}
+html.vis #joy div{width:42px;height:42px;margin:-21px 0 0 -21px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+html.vis #maalnote{font:500 11px/1.3 var(--v-font)!important;letter-spacing:.01em;background:rgba(29,36,33,.55)!important;border-radius:6px!important;padding:5px 9px!important;top:calc(10px + env(safe-area-inset-top))!important;left:10px!important;right:auto!important}
+html.vis #prep{background:rgba(244,244,241,.97)!important}html.vis #prepT{font:600 15px var(--v-font)!important;color:var(--v-ink)!important}
+html.vis #prepS{display:block}html.vis #prepP{font:500 12px var(--v-font)!important;font-variant-numeric:tabular-nums;color:var(--v-mut)!important}
+html.vis #looktip{bottom:auto!important;top:calc(44px + env(safe-area-inset-top))!important;right:12px!important;font:500 12px/1.35 var(--v-font)!important;text-align:right}
+html.vis #prepB{background:var(--v-ink)!important}html.vis #prep div:has(>#prepB){height:3px!important;border-radius:2px!important;background:#e2e4df!important}html.vis #prepT{margin-bottom:14px!important}
+#prepS{display:none;font:500 11px/1 var(--v-font,system-ui);letter-spacing:.1em;text-transform:uppercase;color:#68716c;margin-bottom:12px}
+html.vis #modal h3{font-family:var(--v-font);font-weight:700;letter-spacing:-.01em}html.vis #modal .btn{font-family:var(--v-font);border-radius:8px}html.vis #modal .btn.acc{background:var(--v-pri)}
+@media (max-width:520px){#mkort{left:8px;right:8px;bottom:8px}#mkort img{height:28px}#mkort .btn{display:none}html.vis #bar button{padding:10px 11px}html.vis #bar button.pri{padding:11px 14px}}
 html.vis #maalnote{top:8px!important;bottom:auto!important;left:auto!important;right:8px!important}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","three/examples/jsm/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/","three-mesh-bvh":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.3/src/index.js","three-mesh-bvh/":"https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.3/","three-gpu-pathtracer":"https://cdn.jsdelivr.net/npm/three-gpu-pathtracer@0.0.20/src/index.js"}}</script>
@@ -103,7 +125,7 @@ html.vis #maalnote{top:8px!important;bottom:auto!important;left:auto!important;r
     <div id="looktip">Dra for å se deg rundt<br>Trykk for å velge</div>
     <div id="cross"></div>
     <div id="pthud" style="position:absolute;left:50%;top:10px;transform:translateX(-50%);background:rgba(20,20,20,.72);color:#fff;padding:6px 12px;border-radius:20px;font-size:12.5px;display:none;z-index:4;pointer-events:none;white-space:nowrap"></div>
-    <div id="prep" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(246,244,240,.94);z-index:6"><div style="width:min(340px,80%);text-align:center;font:14px system-ui,sans-serif;color:#1f2328"><div id="prepT" style="margin-bottom:10px">Klargjør 3D …</div><div style="height:8px;border-radius:4px;background:#dedad3;overflow:hidden"><div id="prepB" style="height:100%;width:0;background:#d9632b;transition:width .15s"></div></div><div id="prepP" style="margin-top:8px;font-size:12px;color:#6b6f76">0 %</div></div></div>
+    <div id="prep" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(246,244,240,.94);z-index:6"><div style="width:min(340px,80%);text-align:center;font:14px system-ui,sans-serif;color:#1f2328"><div id="prepS"></div><div id="prepT" style="margin-bottom:10px">Klargjør 3D …</div><div style="height:8px;border-radius:4px;background:#dedad3;overflow:hidden"><div id="prepB" style="height:100%;width:0;background:#d9632b;transition:width .15s"></div></div><div id="prepP" style="margin-top:8px;font-size:12px;color:#6b6f76">0 %</div></div></div>
     <div id="hint"></div>
     <section id="sheet" class="sheet"></section>
     <section id="cat" class="sheet"></section>
@@ -225,7 +247,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v66',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v67',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -1169,7 +1191,7 @@ const AUTOGI={t:0};function autoGI(ms=4000){clearTimeout(AUTOGI.t);if(typeof VIS
  mens en lastelinje viser fremdriften. Tegningen står på pause så lenge. */
 const PREP={on:false,need:false,hold:0};
 function newMats(){const seen=new Set();let n=0;scene.traverseVisible(o=>{if(!o.material)return;for(const m of [].concat(o.material)){if(seen.has(m))continue;seen.add(m);if(!renderer.properties.get(m).currentProgram)n++}});return n}
-function prepShow(p,txt){const el=$('#prep');if(el.style.display!=='flex')el.style.display='flex';$('#prepT').textContent=txt;$('#prepB').style.width=Math.round(p*100)+'%';$('#prepP').textContent=Math.round(p*100)+' %'}
+function prepShow(p,txt){const el=$('#prep');{const sEl=$('#prepS');if(sEl)sEl.textContent=VIS&&S&&S.name?S.name.replace(/,.*$/,''):''}if(el.style.display!=='flex')el.style.display='flex';$('#prepT').textContent=txt;$('#prepB').style.width=Math.round(p*100)+'%';$('#prepP').textContent=Math.round(p*100)+' %'}
 async function prep3D(c){PREP.on=true;const t0=performance.now();let shown=$('#prep').style.display==='flex';const show=(p,txt)=>{if(!shown&&performance.now()-t0<250)return;shown=true;prepShow(p,txt)};const yld=()=>new Promise(r=>setTimeout(r,0));
  try{show(.02,'Bygger boligen …');await yld();
   if(!lysOk()&&await lysFetch(f=>show(.05+.4*f,'Henter ferdig beregnet lys …')))show(.47,'Legger på lyset …');
@@ -2769,13 +2791,12 @@ function visLenke(k,p){return PUBLIC_URL+'?bolig='+k+(p&&(p.navn||p.firma)?'&m='
 function meglerKort(){let el=$('#mkort');if(!VIS){if(el)el.remove();return}
  if(!el){el=document.createElement('div');el.id='mkort';$('#stage').appendChild(el)}
  const p=MEGLER||{},logo=rensUrl(p.logo);
- el.innerHTML=`${logo?`<img src="${esc(logo)}" alt="" onerror="this.remove()">`:''}<div class="mk-t"><b>${esc(p.firma||S.name||'')}</b><span>${esc(p.navn?(p.navn+(p.tittel?' · '+p.tittel:'')):'3D-visning av boligen')}</span></div><button class="btn acc" id="mkBtn">📅 Be om visning</button>`;
- el.querySelector('#mkBtn').onclick=visKontakt}
+ el.innerHTML=`${logo?`<img src="${esc(logo)}" alt="" onerror="this.remove()">`:''}<div class="mk-t"><span class="mk-f">${esc(p.firma||'Visning')}</span><span class="mk-n">${esc(p.navn||S.name||'3D-visning av boligen')}</span>${p.tittel?`<span class="mk-r">${esc(p.tittel)}</span>`:''}</div>`}
 function visKontakt(){const p=MEGLER||{},k=hjemKey(),adr=S.name||'boligen';telKontakt(k);
  const emne=encodeURIComponent('Visning: '+adr),tekst=encodeURIComponent('Hei'+(p.navn?' '+p.navn.split(' ')[0]:'')+'!\n\nJeg har sett 3D-visningen av '+adr+' og vil gjerne komme på visning.\n\nNavn:\nTelefon:\n');
  const tlf=(p.tlf||'').replace(/[^\d+]/g,''),ann=rensUrl(p.annonse);
- const knapper=[tlf?`<a class="btn acc" href="tel:${tlf}">📞 Ring ${esc(p.tlf)}</a>`:'',p.epost?`<a class="btn" href="mailto:${esc(p.epost)}?subject=${emne}&body=${tekst}">✉️ Send e-post</a>`:'',ann?`<a class="btn" href="${esc(ann)}" target="_blank" rel="noopener">🔗 Se annonsen</a>`:''].join('');
- modal(`<h3>📅 Be om visning</h3><p style="font-size:14px">${esc(adr)}${p.navn?`<br>Megler: <b>${esc(p.navn)}</b>${p.firma?', '+esc(p.firma):''}`:''}</p>
+ const knapper=[tlf?`<a class="btn acc" href="tel:${tlf}">Ring ${esc(p.tlf)}</a>`:'',p.epost?`<a class="btn" href="mailto:${esc(p.epost)}?subject=${emne}&body=${tekst}">Send e-post</a>`:'',ann?`<a class="btn" href="${esc(ann)}" target="_blank" rel="noopener">Se annonsen</a>`:''].join('');
+ modal(`<h3>Be om visning</h3><p style="font-size:14px">${esc(adr)}${p.navn?`<br>Megler: <b>${esc(p.navn)}</b>${p.firma?', '+esc(p.firma):''}`:''}</p>
   <div class="acts" style="flex-wrap:wrap;justify-content:flex-start">${knapper||'<p style="font-size:13px">Megleren har ikke lagt inn kontaktinformasjon ennå.</p>'}</div>
   <div class="acts"><button class="btn" id="vkc">Lukk</button></div>`,m=>{m.querySelector('#vkc').onclick=closeModal;m.querySelectorAll('a.btn').forEach(a=>a.addEventListener('click',()=>telKontakt(k,a.getAttribute('href').split(':')[0])))})}
 function meglerProfil(){const p=meglerLagret()||{},k=hjemKey();
@@ -3062,7 +3083,7 @@ function personvern(){modal(`<h3>🔒 Personvern, bilder og mål</h3><div style=
  <p><b>Besøkstall:</b> når du åpner en eksempelbolig mens du er logget inn med skrivetilgang, lagres hvor mange ganger du har åpnet hver bolig (ingen andre opplysninger), slik at eieren av appen kan se hvilke boliger som blir sett.</p>
  <p>Kartdata © OpenStreetMap-bidragsytere (ODbL). Terreng: Kartverket.</p></div><div class="acts"><button class="btn" id="pvc">Lukk</button></div>`,m=>m.querySelector('#pvc').onclick=closeModal)}
 {const el=document.createElement('div');el.id='maalnote';el.style.cssText='position:fixed;left:8px;bottom:76px;z-index:5;font:11px system-ui;color:#fff;background:rgba(20,20,22,.45);padding:3px 8px;border-radius:8px;pointer-events:auto;cursor:pointer;display:none';
- el.textContent='Illustrasjon fra annonse – mål og innredning er omtrentlige ⓘ';el.onclick=personvern;document.body.appendChild(el);
+ el.textContent=VIS?'Basert på annonsen · mål og møbler er omtrentlige':'Illustrasjon fra annonse – mål og innredning er omtrentlige ⓘ';el.onclick=personvern;document.body.appendChild(el);
  setInterval(()=>{const k=hjemKey();el.style.display=k&&k!=='demohus'?'block':'none'},1000)}
 
 function justerMaal(){const rs=S.rooms.filter(r=>r.pts.length>=3);if(!rs.length){toast('Ingen rom å måle');return}
@@ -3267,7 +3288,8 @@ function setHint(){const h=$('#hint');let m='';
  if(!m){h.style.display='none';return}h.innerHTML=`<span>${m}</span><button id="hx">✕</button>`;h.style.display='flex';
  $('#hx').onclick=()=>{armed=null;moveMode=false;if(tool!=='select')setTool('select');setHint()}}
 function renderBar(){const b=$('#bar');let h='';const B_=(id,ic,t,on,cls='')=>`<button data-b="${id}" class="${on?'on':''} ${cls}"><span>${ic}</span>${t}</button>`;
- if(VIS){b.innerHTML=B_('walk','🚶','Gå',mode3==='walk')+B_('orbit','🏠','Oversikt',mode3==='orbit')+B_('kontakt','📅','Be om visning',0,'pri');return}
+ if(VIS){const I=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;const V=(id,ic,t,on,cls='')=>`<button data-b="${id}" class="${on?'on':''} ${cls}">${ic}${t}</button>`;
+  b.innerHTML=V('walk',I('<circle cx="12" cy="4.5" r="1.8"/><path d="M9 21l2.2-6.5L9.5 11l3-3 2.2 3.2H18"/><path d="M13.2 14.5L15 21"/>'),'Gå',mode3==='walk')+V('orbit',I('<path d="M3 10.5L12 4l9 6.5"/><path d="M5 9.3V20h14V9.3"/><path d="M10 20v-5.5h4V20"/>'),'Oversikt',mode3==='orbit')+V('kontakt',I('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>'),'Be om visning',0,'pri');return}
  if(curView==='plan'){
   if(tool==='room'){h=B_('undoPt','↩','Angre punkt')+B_('close','✅','Lukk rom',0,'pri')+B_('cancel','✕','Avbryt')}
   else if(tool==='wall'){h=B_('undoPt','↩','Angre')+B_('cancel','✓','Ferdig',0,'pri')}
