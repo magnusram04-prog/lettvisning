@@ -248,7 +248,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v71',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v72',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -2848,7 +2848,7 @@ const PUBLIC_URL='https://magnusram04-prog.github.io/lettvisning/';
 const SB={url:'https://xobutcyesgnrjotzdadw.supabase.co',anon:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvYnV0Y3llc2ducmpvdHpkYWR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxMDY0NzAsImV4cCI6MjEwOTY4MjQ3MH0.ULmhldc491HbCBvE2Kuou1LcV_47pcG408d-69lU7m0'};
 const OFFENTLIG=/github\.io$/.test(location.hostname)||URLQ.has('offentlig');
 const PUB={okt:(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()),sek:0,rom:{},kontakt:0,kt:{},sendt:0,endret:false};
-const pubBolig=()=>{const k=hjemKey();return k&&k===URLQ.get('bolig')?k:null};// bare boligen lenken peker på telles
+const pubBolig=()=>{const k=hjemKey(),q=URLQ.get('bolig'),L=window.__lvLenke;if(!k||!q)return null;if(k===q)return k;return L&&L.nokkel===q&&L.bolig===k?k:null};// bare boligen lenken peker på telles
 function pubSend(tving){if(!OFFENTLIG||!SB.anon||SB.anon.startsWith('__'))return;const k=pubBolig();if(!k||!PUB.endret)return;const n=Date.now();if(!tving&&n-PUB.sendt<30000)return;PUB.sendt=n;PUB.endret=false;
  const p=MEGLER||{},body={p_okt:PUB.okt,p_bolig:k,p_sek:Math.round(PUB.sek),p_rom:PUB.rom,p_kontakt:PUB.kontakt,p_kontakt_type:PUB.kt,p_megler:[p.firma,p.navn].filter(Boolean).join(' · ').slice(0,120)||null,
   p_enhet:matchMedia('(pointer:coarse)').matches?'mobil':'pc',p_kilde:(()=>{try{return document.referrer?new URL(document.referrer).hostname:'direkte'}catch(e){return null}})()};
@@ -3087,7 +3087,7 @@ function lenkeBolig(){let k=null;try{k=new URLSearchParams(location.search).get(
  if(k&&!HJEM.some(h=>h[0]===k)&&/^[a-z0-9-]{3,60}$/.test(k)){lastBolig(k);return}
  if(!k||!HJEM.some(h=>h[0]===k)){if(VIS){meglerKort();if(OFFENTLIG)setTimeout(pubForside,900)}return}setTimeout(()=>{openMenu();const b=document.querySelector(`[data-m="${k}"]`);if(b)b.click();else closeModal();if(VIS)setTimeout(visStart,300)},700)}
 async function lastBolig(k){try{let r;if(/^[0-9a-f]{32}$/.test(k))r=await fetch(SB.url+'/rest/v1/rpc/hent_visning',{method:'POST',headers:{apikey:SB.anon,Authorization:'Bearer '+SB.anon,'Content-Type':'application/json'},body:JSON.stringify({p_nokkel:k})});else r=await fetch('boliger/'+k+'.json');if(!r.ok)throw new Error(r.status);const d=await r.json();if(!d||!Array.isArray(d.rooms))throw new Error('ugyldig');
- const ms=S.models;S=d;S.models=ms||[];S.boligId=d.boligId||k;if(d.megler&&!URLQ.get('m'))MEGLER=d.megler;sel=null;bgImg=null;applyNight();structKey=null;changed();fitView();startWalkPos();if(VIS)setTimeout(visStart,300);else toast('🏠 '+(S.name||k)+' er lastet')}
+ const ms=S.models;S=d;S.models=ms||[];S.boligId=d.boligId||k;window.__lvLenke={nokkel:k,bolig:S.boligId};if(d.megler&&!URLQ.get('m'))MEGLER=d.megler;sel=null;bgImg=null;applyNight();structKey=null;changed();fitView();startWalkPos();if(VIS)setTimeout(visStart,300);else toast('🏠 '+(S.name||k)+' er lastet')}
  catch(e){console.warn('bolig',e);toast('Fant ikke boligen')}}
 function vendFritt(){const t0=performance.now(),p0=rig.position.clone();
  const prøv=()=>{if(performance.now()-t0>15000)return;if(dirty3D||PREP.on||PREP.need||!buildG.children.length){setTimeout(prøv,300);return}
