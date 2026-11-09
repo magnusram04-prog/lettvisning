@@ -225,7 +225,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v65',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v66',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -3698,7 +3698,7 @@ const LOOP_=(t)=>{const now=performance.now();const dt=Math.min(.05,(now-lastT)/
  if(mode3==='walk')walkUpdate(dt);else if(orbit.update())needRender=true;
  const c=mode3==='walk'?cam:camO;if(PREP.need){PREP.need=false;prep3D(c);return}placeDiscs(c);aeUpdate(c,dt);
  if(sunAnim){S.sunTime+=dt*.8;const end=site()?22.5:18.5;if(S.sunTime>=end){S.sunTime=end;sunAnim=false;pthud.style.display='none';save();toast('☀️ Dagen er spilt av')}
-  else{pthud.style.display='block';pthud.textContent='☀️ kl '+String(Math.floor(S.sunTime)).padStart(2,'0')+':'+String(Math.floor(S.sunTime%1*60)).padStart(2,'0')+'  (☰ for å stoppe)'}applyNight()}poolFade(dt);lsT-=dt;if(lsT<=0){lsT=.4;poolAssign(c);pickShadowLights(c);if(!xr)probeUpdate(c)}
+  else{pthud.style.display='block';pthud.textContent='☀️ kl '+String(Math.floor(S.sunTime)).padStart(2,'0')+':'+String(Math.floor(S.sunTime%1*60)).padStart(2,'0')+'  (☰ for å stoppe)'}applyNight()}poolFade(dt);lsT-=dt;if(lsT<=0){lsT=.4;poolAssign(c);pickShadowLights(c);probeUpdate(c)}
  // tegn bare når noe har endret seg (sparer batteri og varme)
  // fotomodus: står kameraet stille i 1,2 s, slås ray tracing på; bevegelse gir vanlig grafikk til du står stille igjen
  if(PT.auto&&!PT.on&&curView==='3d'&&Q==='hoy'&&!GI.busy&&!PREP.on&&!PREP.need&&!document.hidden&&lysOk()){c.updateMatrixWorld();const k_=c.matrixWorld.elements.map(v=>v.toFixed(3)).join(',');if(k_!==PT.autoKey){PT.autoKey=k_;PT.autoT=now}else if(now-PT.autoT>1200&&!PT.autoBusy){PT.autoBusy=true;ptToggle().finally(()=>{PT.autoBusy=false})}}
