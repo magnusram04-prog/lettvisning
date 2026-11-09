@@ -248,7 +248,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v73',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v74',APP_DATE='9.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -3062,8 +3062,9 @@ function piOversikt(A,G){const{W,H,c}=A,o=document.createElement('canvas');o.wid
   g.fillStyle='#d9282f';g.beginPath();g.arc(x,y,fs*.75,0,7);g.fill();g.fillStyle='#fff';g.fillText(String(j+1),x,y+1)});return o}
 const PI_PROMPT=n=>`Bildet er en plantegning av en bolig. Jeg har funnet ${n} rom og merket dem med røde, nummererte sirkler (1–${n}).
 Svar med KUN dette JSON-objektet:
-{"rom":[{"nr":1,"navn":"Stue","type":"stue"}],"maal":[{"nr":1,"akse":"bredde","meter":5.24}],"bra":74}
+{"rom":[{"nr":1,"navn":"Stue","type":"stue"}],"etiketter":[{"tekst":"Stue","type":"stue","x":0.42,"y":0.31}],"maal":[{"nr":1,"akse":"bredde","meter":5.24}],"bra":74}
 - "rom": ett element per nummer. "navn" er rommets navn slik det står på tegningen (norsk). "type" er én av: stue, kjokken, stue_kjokken, soverom, bad, wc, entre, gang, bod, vaskerom, balkong, kontor, spisestue, annet. Hvis én flate har både stue og kjøkken, bruk stue_kjokken.
+- "etiketter": HVER romtekst som står på tegningen (også rom uten rød sirkel, og også når flere navn står i samme flate), med midten av teksten som brøk av bildets bredde (x) og høyde (y), 0–1, så nøyaktig du kan. Står samme navn flere ganger (f.eks. to «Soverom»), nummerer dem («Soverom 1», «Soverom 2»). Ikke ta med mål, møbeltekst (K/F, DW, Peis) eller overskrifter. "type" fra samme liste som over.
 - "maal": målene som står skrevet på tegningen (f.eks. «5,24 m») og som måler et helt rom innvendig. "akse" er "bredde" for vannrett mål i bildet og "dybde" for loddrett. Ta bare med mål du er sikker på hvilket rom og hvilken retning gjelder. Tom liste hvis ingen.
 - "bra": bruksareal i m² hvis det står på tegningen, ellers null.`;
 async function piClaude(A,G){const s=await window.claude?.use?.('sample').catch(()=>null);if(!s)return{feil:'ikke tilgjengelig'};
@@ -3080,6 +3081,50 @@ function piSlaSammen(A,typer,navn){const ap=piApninger(A,A.lab).filter(o=>o.type
  const info=brukt.map(k=>({a:0,x0:A.W,x1:0,y0:A.H,y1:0,ute:A.info[k-1].ute}));for(let i=0;i<N;i++){const k=A.lab[i];if(!k)continue;const m=ny.get(k);A.lab[i]=m;const f=info[m-1],x=i%A.W,y=(i/A.W)|0;f.a++;if(x<f.x0)f.x0=x;if(x>f.x1)f.x1=x;if(y<f.y0)f.y0=y;if(y>f.y1)f.y1=y}
  const nT=[],nN=[];brukt.forEach((k,i)=>{nT[i]=typer[k-1];nN[i]=navn[k-1]});typer.length=0;navn.length=0;typer.push(...nT);navn.push(...nN);A.info=info;A.n=brukt.length;return true}
 
+function piDelEtterNavn(A,et){const{W,H}=A,N=W*H,ppm=A.ppm,lab=A.lab,barr=A.barr;if(!Array.isArray(et)||!et.length)return 0;
+ const pts=[],R=Math.round(.6*ppm);
+ for(const e of et){if(!(e&&e.x>=0&&e.x<=1&&e.y>=0&&e.y<=1))continue;const x=Math.round(e.x*W),y=Math.round(e.y*H),erUte=e.type==='balkong'||/balkong|terrasse|veranda/i.test(e.tekst||'');let best=-1,bd=1e18;
+  for(let dy=-R;dy<=R;dy+=2)for(let dx=-R;dx<=R;dx+=2){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=W||Y>=H)continue;const i=Y*W+X;if(lab[i]>0&&(erUte||!A.info[lab[i]-1].ute)){const d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}}}
+  if(best>=0&&!/^(skap|k\/f|garderobeskap)$/i.test(String(e.tekst||'').trim()))pts.push({i:best,navn:String(e.tekst||'').trim().toLowerCase(),gr:/^(stue|kjokken|stue_kjokken|spisestue)$/.test(e.type)?'stue':(e.type||'')+'|'+String(e.tekst||'').trim().toLowerCase(),e})}
+ A.etiketter=pts;let delt=0;const st=new Int32Array(N),mk=new Int32Array(N);let merke=0;
+ const fyll=(start,k,stopp)=>{merke++;let sp=0,n=0;mk[start]=merke;st[sp++]=start;while(sp){const i=st[--sp];if(i===stopp)return -1;n++;const x=i%W;
+   for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j<0||j>=N||lab[j]!==k||mk[j]===merke)continue;mk[j]=merke;st[sp++]=j}}return n};
+ const nyInfo=k=>{const f={a:0,x0:W,x1:0,y0:H,y1:0,ute:A.info[k-1]?A.info[k-1].ute:false};return f};
+ for(let runde=0;runde<12;runde++){
+  let par=null;for(let a=0;a<pts.length&&!par;a++)for(let b=a+1;b<pts.length;b++){const ka=lab[pts[a].i],kb=lab[pts[b].i];if(ka>0&&ka===kb&&!pts[a].fast&&!pts[b].fast&&!(pts[a].gr==='stue'&&pts[b].gr==='stue')){par=[pts[a],pts[b],ka];break}}
+  if(!par)break;const[pa,pb,k]=par,f=A.info[k-1];
+  const Lmin=Math.round(.5*ppm),Lmax=Math.round(3*ppm),kand=[];
+  for(const hor of[true,false]){const P0=hor?f.y0:f.x0,P1=hor?f.y1:f.x1,Q0=hor?f.x0:f.y0,Q1=hor?f.x1:f.y1,QM=hor?W:H,ix=(p,q)=>hor?p*W+q:q*W+p;
+   for(let p=P0;p<=P1;p++){let q=Q0;while(q<=Q1){if(lab[ix(p,q)]!==k){q++;continue}const a=q;while(q<=Q1&&lab[ix(p,q)]===k)q++;const b=q-1,L=b-a+1;if(L<Lmin||L>Lmax)continue;
+     if(a<=0||b>=QM-1||!barr[ix(p,a-1)]||!barr[ix(p,b+1)])continue;kand.push({hor,p,a,b,L,ix})}}}
+  kand.sort((x,y)=>x.L-y.L);const testet=[],d30=Math.round(.3*ppm),minA=ppm*ppm;let ok=null,tester=0;
+  for(const c of kand){if(tester>300)break;if(testet.some(t=>t.hor===c.hor&&Math.abs(t.p-c.p)<=d30&&Math.abs(t.a-c.a)<=4&&Math.abs(t.b-c.b)<=4))continue;testet.push(c);tester++;
+   const lin=[];for(let q=c.a;q<=c.b;q++)lin.push(c.ix(c.p,q));if(lin.includes(pa.i)||lin.includes(pb.i))continue;
+   for(const i of lin)lab[i]=-1;const n1=fyll(pa.i,k,pb.i);let god=false;if(n1>=minA){const n2=fyll(pb.i,k,-1);god=n2>=minA}
+   if(god){ok=lin;break}for(const i of lin)lab[i]=k}
+  if(!ok){// ingen vegg å kutte langs (f.eks. tynne innervegger på en nedskalert tegning): fordel flaten til nærmeste navn,
+   // med mørke streker som hindringer; grensen blir vegg der den går i en strek og åpning der den går i fri flate
+   const her=pts.filter(p=>lab[p.i]===k),eiere=[];for(const p of her){const e=p.gr==='stue'?eiere.find(x=>x.gr==='stue'):null;if(e)e.p.push(p);else eiere.push({gr:p.gr,p:[p]})}
+   if(eiere.length<2){for(const p of her)p.fast=1;continue}
+   const dark=A.dark,eier=new Int32Array(N).fill(-1);let q=[];eiere.forEach((e,j)=>{for(const p of e.p){eier[p.i]=j;q.push(p.i)}});
+   for(const fri of[true,false]){let qq=fri?q:[];if(!fri)for(let i=0;i<N;i++)if(lab[i]===k&&eier[i]>=0)qq.push(i);
+    while(qq.length){const nq=[];for(const i of qq){const x=i%W;for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j<0||j>=N||lab[j]!==k||eier[j]>=0)continue;if(fri&&dark[j])continue;eier[j]=eier[i];nq.push(j)}}qq=nq}}
+   const ids=eiere.map((e,j)=>j===0?k:A.n+j);
+   for(let i=0;i<N;i++){if(lab[i]!==k||eier[i]<0)continue;const x=i%W;let grense=false;for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j>=0&&j<N&&lab[j]===k&&eier[j]>=0&&eier[j]<eier[i]){grense=true;break}}
+    if(grense){lab[i]=0;barr[i]=1;if(!dark[i])A.brI[i]=1}else lab[i]=ids[eier[i]]}
+   const inf=ids.map(()=>nyInfo(k));for(let i=0;i<N;i++){const j=ids.indexOf(lab[i]);if(j<0)continue;const g=inf[j],x=i%W,y=(i/W)|0;g.a++;if(x<g.x0)g.x0=x;if(x>g.x1)g.x1=x;if(y<g.y0)g.y0=y;if(y>g.y1)g.y1=y}
+   A.info[k-1]=inf[0];for(let j=1;j<inf.length;j++)A.info.push(inf[j]);A.n+=inf.length-1;delt+=inf.length-1;for(const p of her)p.fast=1;continue}
+  for(const i of ok){lab[i]=0;barr[i]=1;A.brI[i]=1}
+  const nk=A.n+1;merke++;{let sp=0;st[sp++]=pb.i;mk[pb.i]=merke;lab[pb.i]=nk;while(sp){const i=st[--sp];const x=i%W;for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j<0||j>=N||lab[j]!==k)continue;lab[j]=nk;st[sp++]=j}}}
+  const fk=nyInfo(k),fn=nyInfo(k);for(let i=0;i<N;i++){const l=lab[i];if(l!==k&&l!==nk)continue;const g=l===k?fk:fn,x=i%W,y=(i/W)|0;g.a++;if(x<g.x0)g.x0=x;if(x>g.x1)g.x1=x;if(y<g.y0)g.y0=y;if(y>g.y1)g.y1=y}
+  for(const key in A.info[k-1])if(!(key in fk))fk[key]=A.info[k-1][key],fn[key]=A.info[k-1][key];
+  A.info[k-1]=fk;A.info.push(fn);A.n=nk;delt++}
+ // rom som bare har balkong-/terrasse-etiketter er ute; da regnes skalaen fra BRA på nytt uten dem (samme formel som i piAnalyser)
+ const ute=p=>p.e.type==='balkong'||/balkong|terrasse|veranda/i.test(p.e.tekst||'');const harInne=new Set(pts.filter(p=>!ute(p)).map(p=>lab[p.i]));let nyUte=0;
+ for(const p of pts.filter(ute)){const k=lab[p.i];if(k>0&&!harInne.has(k)&&!A.info[k-1].ute){A.info[k-1].ute=true;nyUte++}}
+ if(nyUte&&A.BRA>0){let sum=0;for(const f of A.info)if(!f.ute)sum+=f.a;if(sum>0){A.ppm=Math.sqrt(sum/(A.BRA*.92));A.ppmBRA=A.ppm}}
+ return delt}
+function piNavnFraEtiketter(A,navn,typer){if(!A.etiketter)return;const ute=p=>p.e.type==='balkong'||/balkong|terrasse|veranda/i.test(p.e.tekst||'');for(const p of [...A.etiketter.filter(p=>!ute(p)),...A.etiketter.filter(ute)]){const k=A.lab[p.i];if(k>0){if(!navn[k-1])navn[k-1]=String(p.e.tekst||'').slice(0,40);if(!typer[k-1]&&PI_TYPER[p.e.type])typer[k-1]=p.e.type}}}
 function importVeiviser(){const ST={t0:0,A:null,G:null,navn:[],typer:[],kilde:'BRA'};
  const typeValg=t=>Object.entries(PI_TYPER).map(([k,[n]])=>`<option value="${k}"${k===t?' selected':''}>${n}</option>`).join('');
  modal(`<h3>📥 Ny bolig fra plantegning</h3>
@@ -3108,9 +3153,12 @@ function importVeiviser(){const ST={t0:0,A:null,G:null,navn:[],typer:[],kilde:'B
    if(j.feil){el.textContent=j.feil==='not_granted'?'Claude fikk ikke tillatelse. Skriv inn navnene selv.':'Claude kunne ikke lese tegningen nå ('+j.feil+'). Skriv inn navnene selv.';return}
    for(const r of j.rom||[]){const k=(r.nr|0)-1;if(k<0||k>=ST.A.n)continue;if(r.navn)ST.navn[k]=String(r.navn).slice(0,40);if(PI_TYPER[r.type])ST.typer[k]=r.type}
    if(j.bra>10&&!(+$m('#piB').value))ST.A.BRA=+j.bra;
+   // romnavn med plassering: del flater som har flere navn, og sett navn/type etter hvor teksten står
+   let delt=0;if(Array.isArray(j.etiketter)&&j.etiketter.length){try{delt=piDelEtterNavn(ST.A,j.etiketter);const n2=[],t2=[];piNavnFraEtiketter(ST.A,n2,t2);
+     for(let k=0;k<ST.A.n;k++){if(n2[k])ST.navn[k]=n2[k];if(t2[k])ST.typer[k]=t2[k];if(ST.typer[k]===undefined)ST.typer[k]=ST.A.info[k].ute?'balkong':''}if(delt)ST.G=piVoks(ST.A)}catch(e){console.warn('etiketter',e)}}
    const sk=piSkalaFraMaal(ST.A,j.maal);if(sk){ST.A.ppm=sk.ppm;ST.kilde='mål'}
    if(piSlaSammen(ST.A,ST.typer,ST.navn))ST.G=piVoks(ST.A);ST.aiFerdig=true;tegn();
-   const e2=ut.querySelector('#piAI');if(e2)e2.innerHTML=`🤖 Claude leste ${(j.rom||[]).length} romnavn${sk?` og ${sk.n} mål (skalaen er justert etter målene)`:(j.maal||[]).length?', men målene stemte ikke godt nok med hverandre – skalaen er fra BRA-i':''}. Sjekk og rett navnene før du bygger.`};
+   const e2=ut.querySelector('#piAI');if(e2)e2.innerHTML=`🤖 Claude leste ${Math.max((j.rom||[]).length,(j.etiketter||[]).length)} romnavn${delt?` og delte ${delt} flate${delt>1?'r':''} som hadde flere navn`:''}${sk?` og ${sk.n} mål (skalaen er justert etter målene)`:(j.maal||[]).length?', men målene stemte ikke godt nok med hverandre – skalaen er fra BRA-i':''}. Sjekk og rett navnene før du bygger.`};
   const bygg=()=>{const A=ST.A;if(ST.typer.some((t,j)=>!t&&!A.info[j].ute)&&!confirm('Noen rom mangler type. Bygge likevel?'))return;
    const adr=$m('#piN').value.trim()||'Ny bolig',t1=performance.now();const ty=ST.typer.map((t,j)=>t||(A.info[j].ute?'balkong':'annet'));if(piSlaSammen(A,ty,ST.navn)){ST.typer=ty;ST.G=piVoks(A)}snapUndo();const ms=S.models;S=piBygg(A,ST.G,ST.navn,ST.typer.map((t,j)=>t||(A.info[j].ute?'balkong':'annet')),adr);S.models=ms;
    sel=null;bgImg=null;applyNight();closeModal();structKey=null;changed();try{foreslaaMobler()}catch(e){console.warn('møbler',e)}changed();fitView();setView('3d');startWalkPos();
