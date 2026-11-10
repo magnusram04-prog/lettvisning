@@ -248,7 +248,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v75',APP_DATE='9.11.2026';let APP_NEW=false;
+const APP_VER='v76',APP_DATE='10.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -2856,9 +2856,12 @@ const fmtTid=s=>s<60?Math.round(s)+' s':s<3600?Math.floor(s/60)+' min '+String(M
 const PUBLIC_URL='https://magnusram04-prog.github.io/lettvisning/';
 const SB={url:'https://xobutcyesgnrjotzdadw.supabase.co',anon:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvYnV0Y3llc2ducmpvdHpkYWR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxMDY0NzAsImV4cCI6MjEwOTY4MjQ3MH0.ULmhldc491HbCBvE2Kuou1LcV_47pcG408d-69lU7m0'};
 const OFFENTLIG=/github\.io$/.test(location.hostname)||URLQ.has('offentlig');
+const INTERN=(()=>{const K='lettvisning-intern';let v=false;try{const q=URLQ.get('intern');if(q==='1')localStorage.setItem(K,'1');else if(q==='0')localStorage.removeItem(K);v=localStorage.getItem(K)==='1'||!!localStorage.getItem('lettvisning-statnokkel')}catch(e){v=URLQ.get('intern')==='1'}
+ if(URLQ.has('intern')){try{const u=new URL(location.href);u.searchParams.delete('intern');history.replaceState(null,'',u)}catch(e){}}return v})();
+if(INTERN&&OFFENTLIG)setTimeout(()=>{try{toast('Intern visning – besøket logges ikke')}catch(e){}},2500);
 const PUB={okt:(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()),sek:0,rom:{},kontakt:0,kt:{},sendt:0,endret:false};
 const pubBolig=()=>{const k=hjemKey(),q=URLQ.get('bolig'),L=window.__lvLenke;if(!k||!q)return null;if(k===q)return k;return L&&L.nokkel===q&&L.bolig===k?k:null};// bare boligen lenken peker på telles
-function pubSend(tving){if(!OFFENTLIG||!SB.anon||SB.anon.startsWith('__'))return;const k=pubBolig();if(!k||!PUB.endret)return;const n=Date.now();if(!tving&&n-PUB.sendt<30000)return;PUB.sendt=n;PUB.endret=false;
+function pubSend(tving){if(!OFFENTLIG||INTERN||!SB.anon||SB.anon.startsWith('__'))return;const k=pubBolig();if(!k||!PUB.endret)return;const n=Date.now();if(!tving&&n-PUB.sendt<30000)return;PUB.sendt=n;PUB.endret=false;
  const p=MEGLER||{},body={p_okt:PUB.okt,p_bolig:k,p_sek:Math.round(PUB.sek),p_rom:PUB.rom,p_kontakt:PUB.kontakt,p_kontakt_type:PUB.kt,p_megler:[p.firma,p.navn].filter(Boolean).join(' · ').slice(0,120)||null,
   p_enhet:matchMedia('(pointer:coarse)').matches?'mobil':'pc',p_kilde:(()=>{try{return document.referrer?new URL(document.referrer).hostname:'direkte'}catch(e){return null}})()};
  fetch(SB.url+'/rest/v1/rpc/spor',{method:'POST',keepalive:true,headers:{'apikey':SB.anon,'Authorization':'Bearer '+SB.anon,'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{PUB.endret=true})}
@@ -3193,7 +3196,9 @@ function personvern(){modal(`<h3>🔒 Personvern, bilder og mål</h3><div style=
  <p><b>Samtykke:</b> en bolig fra en FINN-annonse skal bare vises for andre når megleren eller selgeren har sagt ja. Eksempelboligene i menyen er laget som demonstrasjon.</p>
  <p><b>Mål og innredning er omtrentlige.</b> Plantegningene i annonser er «ikke i målestokk», og det som ikke synes på bildene er anslått. Har du oppmålte mål, kan du rette modellen med «📏 Juster mål etter oppmåling».</p>
  <p><b>Dine egne prosjekter</b> lagres i nettleseren din og – når du er logget inn – i din private del av appens lagring, slik at de følger deg mellom enheter. Andre ser dem ikke.</p>
- <p><b>Besøkstall:</b> når du åpner en eksempelbolig mens du er logget inn med skrivetilgang, lagres hvor mange ganger du har åpnet hver bolig (ingen andre opplysninger), slik at eieren av appen kan se hvilke boliger som blir sett.</p>
+ <p><b>Besøkstall i appen:</b> når du åpner en eksempelbolig mens du er logget inn med skrivetilgang, lagres hvor mange ganger du har åpnet hver bolig (ingen andre opplysninger), slik at eieren av appen kan se hvilke boliger som blir sett.</p>
+ <p><b>Besøksstatistikk på visningssiden:</b> når du åpner en bolig fra en meglerlenke, lagres en tilfeldig øktkode som lages på nytt hver gang siden åpnes, hvilken bolig, hvor lenge du ser på den og i hvilke rom, om du bruker mobil eller PC, hvilken nettside du kom fra, og om du trykker på kontaktknappene. Formålet er å vise megleren og eieren av LettVisning hvor mye boligen blir sett. Vi lagrer ikke navn, e-post eller IP-adresse, og ingenting lagres på enheten din (ingen informasjonskapsler).</p>
+ <p><b>Tjenester siden bruker:</b> Supabase (database for boligene og statistikken), GitHub Pages (driver nettsiden), jsDelivr (3D-biblioteker) og Google Fonts (skrift). Som ved alle nettsider får disse IP-adressen din når siden lastes.</p>
  <p>Kartdata © OpenStreetMap-bidragsytere (ODbL). Terreng: Kartverket.</p></div><div class="acts"><button class="btn" id="pvc">Lukk</button></div>`,m=>m.querySelector('#pvc').onclick=closeModal)}
 {const el=document.createElement('div');el.id='maalnote';el.style.cssText='position:fixed;left:8px;bottom:76px;z-index:5;font:11px system-ui;color:#fff;background:rgba(20,20,22,.45);padding:3px 8px;border-radius:8px;pointer-events:auto;cursor:pointer;display:none';
  el.textContent=VIS?'Basert på annonsen · mål og møbler er omtrentlige':'Illustrasjon fra annonse – mål og innredning er omtrentlige ⓘ';el.onclick=personvern;document.body.appendChild(el);
