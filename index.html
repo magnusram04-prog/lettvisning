@@ -910,12 +910,18 @@ function buildSite(st){
   if(villa){const wh=o.h*.7,top=base+.3+wh;putPrism(prism(o.p,base,top),M.tak[k%3],M.villa[k%6],sh);gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}
   else{const blokk=o.h>=25,top=base+.3+(blokk?o.h:o.h*.8);putPrism(prism(o.p,base,top),M.roof,M.walls[blokk?3:k%3],sh);if(!blokk)gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}}
  for(const{m,sh,gs}of BK.values()){const g=mergeGeometries(gs,false);gs.forEach(x=>x.dispose());if(!g)continue;g.computeBoundingSphere();const me=add(g,m);me.castShadow=sh}
- if(own){const ow=villa?own.h*.7:own.h,wm=villa?M.villa[0]:M.wall;let yb=y0;if(S.groundPts){yb=Infinity;for(let k=0;k<own.p.length;k++){const a=own.p[k],c=own.p[(k+1)%own.p.length];for(let s=0;s<=4;s++)yb=Math.min(yb,TY(a[0]+(c[0]-a[0])*s/4,a[1]+(c[1]-a[1])*s/4))}yb-=.1}const kj=levelList().some(L=>(L.y||0)<-.5);if(kj&&M.plKjW!==wm){M.plKj=[houseMasked(M.roof.clone(),HMB,'kjellermaske'),houseMasked(wm.clone(),HMB,'kjellermaske')];M.plKjW=wm}add(prism(own.p,yb,-.25),kj?M.plKj:[M.roof,wm]);
+ if(own){const TOPP=!!S.toppetasje/* meta.toppetasje: boligen er øverste etasje, bygget slutter ved taket og får flatt tak (Huk aveny, 15.11.2026) */,ow=TOPP?Htop-y0:villa?own.h*.7:own.h,wm=villa&&!TOPP?M.villa[0]:M.wall;let yb=y0;if(S.groundPts){yb=Infinity;for(let k=0;k<own.p.length;k++){const a=own.p[k],c=own.p[(k+1)%own.p.length];for(let s=0;s<=4;s++)yb=Math.min(yb,TY(a[0]+(c[0]-a[0])*s/4,a[1]+(c[1]-a[1])*s/4))}yb-=.1}const kj=levelList().some(L=>(L.y||0)<-.5);if(kj&&M.plKjW!==wm){M.plKj=[houseMasked(M.roof.clone(),HMB,'kjellermaske'),houseMasked(wm.clone(),HMB,'kjellermaske')];M.plKjW=wm}add(prism(own.p,yb,-.25),kj?M.plKj:[M.roof,wm]);
   if(y0+ow>Htop+.05&&!(villa&&S.rooms.some(r=>r.tak))){const top=add(prism(own.p,Htop,y0+ow),[villa?M.tak[0]:M.roof,wm]);top.userData.ownTop=1;top.visible=mode3==='walk'}
-  if(villa&&gable(own.p,y0+ow,M.tak[0])){const r=facades.children[facades.children.length-1];r.userData.ownTop=1;r.visible=mode3==='walk'}
+  if(TOPP){// flatt tak over hvert rom, trukket 0,25 m ut over veggene, med grå metallkant (bilde 03 og 23)
+   if(!M.takkant)M.takkant=new THREE.MeshStandardMaterial({color:'#8a9095',metalness:.45,roughness:.5});
+   const ut=(p,d)=>{let A=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];A+=p[i][0]*q[1]-q[0]*p[i][1]}const s=A>0?1:-1,n=p.length,L=[];
+    for(let i=0;i<n;i++){const a=p[i],c=p[(i+1)%n],dx=c[0]-a[0],dz=c[1]-a[1],l=Math.hypot(dx,dz)||1,nx=s*dz/l,nz=-s*dx/l;L.push([a[0]+nx*d,a[1]+nz*d,dx,dz])}
+    return L.map((e,i)=>{const f=L[(i+n-1)%n],den=f[2]*e[3]-f[3]*e[2];if(Math.abs(den)<1e-6)return[e[0],e[1]];const t=((e[0]-f[0])*e[3]-(e[1]-f[1])*e[2])/den;return[f[0]+f[2]*t,f[1]+f[3]*t]})};
+   for(const r of S.rooms||[]){if(!r.pts||r.pts.length<3)continue;const t=add(prism(ut(r.pts,.25),Htop-.05,Htop+.4),[M.roof,M.takkant]);t.userData.ownTop=1;t.visible=mode3==='walk'}}
+  else if(villa&&gable(own.p,y0+ow,M.tak[0])){const r=facades.children[facades.children.length-1];r.userData.ownTop=1;r.visible=mode3==='walk'}
   // båndet i leilighetens høyde: bare fasadeflater, og ikke der leiligheten selv ligger (ellers sperres vinduene)
   const pos=[],uv=[];const clip=(a,c)=>{let t0=0,t1=1;const dx=c[0]-a[0],dz=c[1]-a[1];for(const[p,q]of[[-dx,a[0]-bx0],[dx,bx1-a[0]],[-dz,a[1]-bz0],[dz,bz1-a[1]]]){if(p===0){if(q<0)return null;continue}const r=q/p;if(p<0)t0=Math.max(t0,r);else t1=Math.min(t1,r)}return t0<t1?[t0,t1]:null};
-  const n=own.p.length;let u=0;for(let i=0;i<n;i++){const a=own.p[i],c=own.p[(i+1)%n],L=Math.hypot(c[0]-a[0],c[1]-a[1]);const cut=clip(a,c);const parts=cut?[[0,cut[0]],[cut[1],1]]:[[0,1]];
+  const n=TOPP?0:own.p.length;let u=0;for(let i=0;i<n;i++){const a=own.p[i],c=own.p[(i+1)%n],L=Math.hypot(c[0]-a[0],c[1]-a[1]);const cut=clip(a,c);const parts=cut?[[0,cut[0]],[cut[1],1]]:[[0,1]];
    for(const[s0,s1]of parts){if(s1-s0<1e-3)continue;const p0=[a[0]+(c[0]-a[0])*s0,a[1]+(c[1]-a[1])*s0],p1=[a[0]+(c[0]-a[0])*s1,a[1]+(c[1]-a[1])*s1],u0=u+L*s0,u1=u+L*s1,v0=-.25-y0,v1=Htop-y0;
     // ytterflaten peker utover når polygonet går mot klokka i (x,-z); ExtrudeGeometry snur det selv, så vi tegner begge sider
     pos.push(p0[0],-.25,p0[1],p1[0],-.25,p1[1],p1[0],Htop,p1[1],p0[0],-.25,p0[1],p1[0],Htop,p1[1],p0[0],Htop,p0[1]);uv.push(u0,v0,u1,v0,u1,v1,u0,v0,u1,v1,u0,v1)}u+=L}
@@ -1211,7 +1217,7 @@ function fixTangents(root){if(!root)return;root.traverse(o=>{const g=o.isMesh&&o
  Endrer man noe, finnes ingen fil, og «Beregn lys» virker som før. LYS_VER økes når lys- eller modellkoden endres. */
 const LYS_VER='3',PRE={tried:'',busy:false};
 function lysNormKey(){let k=giKey();const ids=new Map();let n=0;const add=a=>(a||[]).forEach(o=>{if(o&&o.id&&!ids.has(o.id))ids.set(o.id,'#'+(n++))});
- for(const L of levelList()){add(L.rooms);add(L.walls);add(L.items)}for(const[id,t]of ids)k=k.split(id).join(t);return LYS_VER+'|'+k}
+ for(const L of levelList()){add(L.rooms);add(L.walls);add(L.items)}for(const[id,t]of ids)k=k.split(id).join(t);return LYS_VER+(S.toppetasje?'t':'')+'|'+k}
 const lysSort=v=>Array.isArray(v)?v.map(lysSort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,lysSort(v[k])])):v;
 function lysNormKeyS(){const k=lysNormKey(),i=k.indexOf('|');try{return'S'+k.slice(0,i+1)+JSON.stringify(lysSort(JSON.parse(k.slice(i+1))))}catch(e){return k}}
 async function lysHash(gammel){const b=new TextEncoder().encode(gammel?lysNormKey():lysNormKeyS());const d=new Uint8Array(await crypto.subtle.digest('SHA-256',b));return[...d.slice(0,10)].map(x=>x.toString(16).padStart(2,'0')).join('')}
