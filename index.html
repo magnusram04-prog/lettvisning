@@ -272,7 +272,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v80',APP_DATE='14.11.2026';let APP_NEW=false;
+const APP_VER='v84',APP_DATE='15.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -866,6 +866,8 @@ function buildSite(st){
   siteMats.villa=['#f2efe8','#9e3b2f','#e3c56f','#7d8f99','#6b5240','#d9d4c4'].map(c=>new THREE.MeshStandardMaterial({map:villaTex(c),roughness:.85}));
   siteMats.tak=['#3f3f42','#7a3a2c','#2f3a33'].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.8,side:THREE.DoubleSide}));
   siteMats.grass=houseMasked(hasPBR&&window.__ASSETS.tex.leafy_grass_gronn_Diffuse?new THREE.MeshStandardMaterial({color:'#ffffff',roughness:1,emissive:'#5e5a52',emissiveMap:pbr('leafy_grass_gronn_Diffuse',3,true),map:pbr('leafy_grass_gronn_Diffuse',3,true),normalMap:pbr('leafy_grass_nor_gl',3),normalScale:new THREE.Vector2(.8,.8)}):new THREE.MeshStandardMaterial({color:'#86c457',roughness:1,emissive:'#2c3324',map:(()=>{const t=new THREE.CanvasTexture(noiseCanvas(256,150,255));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t})()}));
+  // bymiljø: grå heller i stedet for gress (meglertest runde 6: «plen i stedet for gate»)
+  siteMats.hard=houseMasked(new THREE.MeshStandardMaterial({color:'#aaa69f',roughness:.95,emissive:'#3d3a35',map:(()=>{const t=new THREE.CanvasTexture(noiseCanvas(256,175,235));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(40,40);t.colorSpace=THREE.SRGBColorSpace;return t})()}));
   siteMats.water=new THREE.MeshStandardMaterial({color:'#3a6a84',roughness:.12,metalness:.05});
   siteMats.trunk=new THREE.MeshStandardMaterial({color:'#5a4434',roughness:1});siteMats.leaf=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.95})}
  const M=siteMats,villa=st.style==='villa',y0=-st.floorY,b=bbox(),pad=st.pad||.7,bx0=b.x0-pad,bx1=b.x1+pad,bz0=b.z0-pad,bz1=b.z1+pad,TY=terrainFn(st);
@@ -922,9 +924,9 @@ function buildSite(st){
   for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const qx=T.x0+i*S_,qz=T.z0+j*S_;if(qx>=fx0-.01&&qx+S_<=fx1+.01&&qz>=fz0-.01&&qz+S_<=fz1+.01)continue;const a=j*(nx+1)+i;idx.push(a,a+nx+1,a+1,a+1,a+nx+1,a+nx+2)}
   houseMaskUpdate();
   {const F=1.5,mx=Math.round((fx1-fx0)/F),mz=Math.round((fz1-fz0)/F),fp=[],fu=[],fi=[];for(let j=0;j<=mz;j++)for(let i=0;i<=mx;i++){const x=fx0+(fx1-fx0)*i/mx,z=fz0+(fz1-fz0)*j/mz;fp.push(x,TY(x,z)-.05,z);fu.push(x/6,z/6)}
-   for(let j=0;j<mz;j++)for(let i=0;i<mx;i++){const a=j*(mx+1)+i;fi.push(a,a+mx+1,a+1,a+1,a+mx+1,a+mx+2)}const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(fp,3));fg.setAttribute('uv',new THREE.Float32BufferAttribute(fu,2));fg.setIndex(fi);fg.computeVertexNormals();const fm=add(fg,M.grass);fm.castShadow=false}
+   for(let j=0;j<mz;j++)for(let i=0;i<mx;i++){const a=j*(mx+1)+i;fi.push(a,a+mx+1,a+1,a+1,a+mx+1,a+mx+2)}const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(fp,3));fg.setAttribute('uv',new THREE.Float32BufferAttribute(fu,2));fg.setIndex(fi);fg.computeVertexNormals();const fm=add(fg,(S.bakke?S.bakke==='gress':(villa||st.style==='park'))?M.grass:M.hard);fm.castShadow=false}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
-  const tm=add(g,M.grass);tm.castShadow=false;
+  const tm=add(g,(S.bakke?S.bakke==='gress':(villa||st.style==='park'))?M.grass:M.hard);tm.castShadow=false;
   const wg=new THREE.PlaneGeometry(14000,14000);wg.rotateX(-PI/2);wg.translate(T.x0+W_/2,-T.base+y0+.2,T.z0+D_/2);const wm=add(wg,M.water);wm.castShadow=false}
  // trær: fast tilfeldig spredning på land, ikke i hus eller på vei (villa- og parkstil)
  if(villa||st.style==='park'){let s=1234567;const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff};
@@ -946,7 +948,7 @@ function buildSite(st){
   mk(sg,M.leaf,trees.filter(t=>!t[4]),(x,y,z,h_)=>[x,y+h_*.68,z,h_*.62,h_*.58,h_*.62,['#5d7a3a','#6b8a43','#4f6d35','#7a9548'][Math.abs(Math.floor(x*3+z))%4]])}}}
 function buildFacades(){facades.children.forEach(m=>{m.geometry.dispose();if(!m.userData.siteMesh){m.material.map.dispose();m.material.dispose()}});facades.clear();
  const st=site();ground.position.y=(st?-st.floorY:0)-.02;ground.visible=!(st&&st.terrain);
- const far=st&&st.terrain?9000:null;cam.far=far||200;camO.far=far||300;cam.updateProjectionMatrix();camO.updateProjectionMatrix();scene.fog=far?new THREE.Fog('#cfd9e3',700,9000):null;
+ const far=st&&st.terrain?9000:null;cam.far=far||200;camO.far=far||300;cam.updateProjectionMatrix();camO.updateProjectionMatrix();scene.fog=far?new THREE.Fog('#cfd9e3',700,9000):new THREE.Fog('#cfd9e3',1e5,2e5);scene.fog._o=[scene.fog.near,scene.fog.far];
  if(st)return buildSite(st);if(S.cladding||S.noBackdrop)return;// hus uten kartdata: ingen bykulisse, bare hage og bakke
  const b=bbox();const cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,R_=Math.max(b.x1-b.x0,b.z1-b.z0)/2+14;
  for(let i=0;i<4;i++){const t=facadeTex.clone();t.needsUpdate=true;t.repeat.set(3,1);const m=new THREE.Mesh(new THREE.PlaneGeometry(R_*2,24),new THREE.MeshStandardMaterial({map:t,roughness:.9}));const a=i*PI/2;m.position.set(cx+Math.sin(a)*R_,8,cz+Math.cos(a)*R_);m.rotation.y=a+PI;facades.add(m)}}
@@ -1007,6 +1009,8 @@ const TILE6030=(()=>{const N=512,c=document.createElement('canvas');c.width=c.he
  for(let j=0;j<4;j++)for(let i=0;i<2;i++){const v=246+Math.random()*7|0;x.fillStyle='rgb('+v+','+v+','+(v-1)+')';x.fillRect(i*tw+2,j*th+2,tw-4,th-4)}
  const map=new THREE.CanvasTexture(c);map.wrapS=map.wrapT=THREE.RepeatWrapping;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=8;const bump=new THREE.CanvasTexture(c);bump.wrapS=bump.wrapT=THREE.RepeatWrapping;return{map,bump}})();
 const PBR_FLOOR={eik:['wood_floor',1.7,'#f0dcc4','wood_floor_lys'],lys:['wood_floor',1.7,'#ffffff','wood_floor_lys'],mork:['wood_floor',1.7,'#7a5640'],fiskeben:['herringbone_parquet',1.6,'#f2e2cc'],fiskeben_lys:['herringbone_parquet',1.6,'#ffffff','herringbone_lys'],flis:['large_grey_tiles',2,'#ffffff'],hvitflis:['long_white_tiles',1.2,'#ffffff','hvit_flis'],graflis:['long_white_tiles',1.2,'#c4c4c1'],brunflis:['long_white_tiles',1.2,'#8a5446'],rodbrun:['wood_floor',1.7,'#d68f60']};
+const UTS={};function utsnittTex(f){if(UTS[f])return UTS[f];const t=new THREE.TextureLoader().load('utsnitt/'+f,()=>{needRender=true;PT.dirty=true;structKey=null;dirty3D=true});t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;t.wrapS=t.wrapT=THREE.RepeatWrapping;return UTS[f]=t}
+function utsnittMat(f,rx,ry,ox=0,oy=0,rough=.5){const t=utsnittTex(f).clone();t.needsUpdate=true;t.repeat.set(rx,ry);t.offset.set(ox,oy);const m=new THREE.MeshStandardMaterial({color:'#ffffff',map:t,roughness:rough});m.userData.own=1;return m}
 function getFloorTex(kind){
  if(floorTex[kind])return floorTex[kind];
  // fast ruhet: Poly Havens ruhetskart for parkett gir et vått, speilblankt gulv – oljet eik er halvmatt
@@ -1099,11 +1103,11 @@ function rebuild_(){
   const ang=Math.atan2(-w.u[1],w.u[0]),nx=-w.u[1],nz=w.u[0];
   const mid0=w.L/2,mx=w.a[0]+w.u[0]*mid0,mz=w.a[1]+w.u[1]*mid0;
   const rL=S.rooms.find(r=>inPoly(mx+nx*.15,mz+nz*.15,r.pts)),rR=S.rooms.find(r=>inPoly(mx-nx*.15,mz-nz*.15,r.pts));
-  const side=(sd,rm)=>{let ex=S.wallColors[w.key+':'+sd];const tp=ex&&ex.startsWith('tapet:')?ex.slice(6):(!ex&&rm&&rm.tapet)||null;if(tp)ex='#f4f2ee';const c=ex||(rm&&rm.wallColor)||S.wallColor;return{tp,c:(!ex&&rm&&rm.panel)||c,tegl:!ex&&rm&&rm.tegl,tile:!ex&&rm&&rm.wallTile,th:rm&&rm.tileH,tm:rm&&rm.tileMarmor,ext:!rm&&!ex,panel:!ex&&rm&&rm.panel}};
+  const side=(sd,rm)=>{let ex=S.wallColors[w.key+':'+sd];const tp=ex&&ex.startsWith('tapet:')?ex.slice(6):(!ex&&rm&&rm.tapet)||null;if(tp)ex='#f4f2ee';const c=ex||(rm&&rm.wallColor)||S.wallColor;return{tp,c:(!ex&&rm&&rm.panel)||c,tegl:!ex&&rm&&rm.tegl,tile:!ex&&rm&&rm.wallTile,th:rm&&rm.tileH,tm:rm&&rm.tileMarmor,wt:!ex&&rm&&rm.wallTex,wm:rm&&rm.wallTexM||.6,wh:rm&&rm.wallTexH,ext:!rm&&!ex,panel:!ex&&rm&&rm.panel}};
   const sL=side('L',rL),sR=side('R',rR);
   const mE=wallMat(S.wallColor);
   for(const p of w.pieces){const len=p.s1-p.s0,hh=p.y1-p.y0;if(len<.005||hh<.005)continue;const mid=(p.s0+p.s1)/2;const cx=w.a[0]+w.u[0]*mid,cz=w.a[1]+w.u[1]*mid;
-   const fm=sd=>{if(sd.ext&&S.cladding){const LP=multiLv()?S.levels[LVo.i]:null;if(LP&&LP.puss)return pussMat(LP.puss,len,hh);return S.cladV?cladMatV(S.cladding,len,hh,p):cladMat(S.cladding,len,hh,p)}if(sd.panel)return panelMat(sd.c,len,hh,p);if(sd.tegl&&!sd.tile)return teglMat(sd.c,len,hh,p,true);if(sd.tp&&TAPET[sd.tp]){const t=TAPET[sd.tp].clone();t.needsUpdate=true;t.repeat.set(len/.53,hh/.53);t.offset.set((p.s0%.53)/.53,((p.y0||0)%.53)/.53);const m=new THREE.MeshStandardMaterial({color:'#ffffff',map:t,roughness:.85});m.userData.own=1;return m}if(!sd.tile)return wallMat(sd.c);if(sd.tm){const t=TILEMARMOR.clone();t.needsUpdate=true;t.wrapT=THREE.ClampToEdgeWrapping;t.repeat.set(len/.6,hh/2.6);t.offset.set((p.s0%.6)/.6,(p.y0||0)/2.6);const m=new THREE.MeshPhysicalMaterial({color:'#ffffff',map:t,roughness:.15,clearcoat:.4,clearcoatRoughness:.12});m.userData.own=1;return m}if(sd.th){const t=TILE6030.map.clone(),b=TILE6030.bump.clone();for(const x of[t,b]){x.needsUpdate=true;x.repeat.set(len/1.2,hh/1.2);x.offset.set((p.s0%1.2)/1.2,(p.y0%1.2)/1.2)}const m=new THREE.MeshPhysicalMaterial({color:sd.c,map:t,bumpMap:b,bumpScale:1.5,roughness:.14,clearcoat:.35,clearcoatRoughness:.1});m.userData.own=1;return m}if(hasPBR){const tl=(n,s)=>{const t=pbr((n==='Diffuse'&&window.__ASSETS.tex.hvit_flis_Diffuse&&new THREE.Color(sd.c).getHSL({h:0,s:0,l:0}).l>.88?'hvit_flis_':'long_white_tiles_')+n,1,s).clone();t.needsUpdate=true;t.repeat.set(len/1.6,hh/1.6);t.offset.set((p.s0%1.6)/1.6,(p.y0%1.6)/1.6);if(sd.th)t.rotation=PI/2;return t};const m=new THREE.MeshStandardMaterial({color:sd.c,map:tl('Diffuse',true),normalMap:tl('nor_gl'),roughnessMap:tl('Rough'),roughness:1});m.userData.own=1;return m}const t=TILE.clone();t.needsUpdate=true;t.repeat.set(len/.6,hh/.6);t.offset.set((p.s0%.6)/.6,(p.y0%.6)/.6);const m=new THREE.MeshStandardMaterial({color:sd.c,map:t,roughness:.25});m.userData.own=1;return m};
+   const fm=sd=>{if(sd.ext&&S.cladding){const LP=multiLv()?S.levels[LVo.i]:null;if(LP&&LP.puss)return pussMat(LP.puss,len,hh);return S.cladV?cladMatV(S.cladding,len,hh,p):cladMat(S.cladding,len,hh,p)}if(sd.panel)return panelMat(sd.c,len,hh,p);if(sd.tegl&&!sd.tile)return teglMat(sd.c,len,hh,p,true);if(sd.wt&&(!sd.wh||(p.y0||0)<sd.wh-.01)){const m=utsnittMat(sd.wt,len/sd.wm,hh/sd.wm,(p.s0%sd.wm)/sd.wm,((p.y0||0)%sd.wm)/sd.wm,sd.tile?.32:.8);return m}if(sd.tp&&TAPET[sd.tp]){const t=TAPET[sd.tp].clone();t.needsUpdate=true;t.repeat.set(len/.53,hh/.53);t.offset.set((p.s0%.53)/.53,((p.y0||0)%.53)/.53);const m=new THREE.MeshStandardMaterial({color:'#ffffff',map:t,roughness:.85});m.userData.own=1;return m}if(!sd.tile)return wallMat(sd.c);if(sd.tm){const t=TILEMARMOR.clone();t.needsUpdate=true;t.wrapT=THREE.ClampToEdgeWrapping;t.repeat.set(len/.6,hh/2.6);t.offset.set((p.s0%.6)/.6,(p.y0||0)/2.6);const m=new THREE.MeshPhysicalMaterial({color:'#ffffff',map:t,roughness:.3,clearcoat:.25,clearcoatRoughness:.35});m.userData.own=1;return m}if(sd.th){const t=TILE6030.map.clone(),b=TILE6030.bump.clone();for(const x of[t,b]){x.needsUpdate=true;x.repeat.set(len/1.2,hh/1.2);x.offset.set((p.s0%1.2)/1.2,(p.y0%1.2)/1.2)}const m=new THREE.MeshPhysicalMaterial({color:sd.c,map:t,bumpMap:b,bumpScale:1.5,roughness:.3,clearcoat:.2,clearcoatRoughness:.35});m.userData.own=1;return m}if(hasPBR){const tl=(n,s)=>{const t=pbr((n==='Diffuse'&&window.__ASSETS.tex.hvit_flis_Diffuse&&new THREE.Color(sd.c).getHSL({h:0,s:0,l:0}).l>.88?'hvit_flis_':'long_white_tiles_')+n,1,s).clone();t.needsUpdate=true;t.repeat.set(len/1.6,hh/1.6);t.offset.set((p.s0%1.6)/1.6,(p.y0%1.6)/1.6);if(sd.th)t.rotation=PI/2;return t};const m=new THREE.MeshStandardMaterial({color:sd.c,map:tl('Diffuse',true),normalMap:tl('nor_gl'),roughnessMap:tl('Rough'),roughness:1.6});m.userData.own=1;return m}const t=TILE.clone();t.needsUpdate=true;t.repeat.set(len/.6,hh/.6);t.offset.set((p.s0%.6)/.6,(p.y0%.6)/.6);const m=new THREE.MeshStandardMaterial({color:sd.c,map:t,roughness:.25});m.userData.own=1;return m};
    const m=new THREE.Mesh(new THREE.BoxGeometry(len,hh,T),[capMat(mE),capMat(mE),mE,mE,fm(sL),fm(sR)]);
    m.position.set(cx,(p.y0+p.y1)/2,cz);m.rotation.y=ang;m.userData={wall:w.key,lid:w.lid};m.castShadow=m.receiveShadow=true;buildG.add(m);
    if(p.y0<.01&&p.y1>.3&&len>.06)for(const sd of[1,-1]){const s_=sd>0?sL:sR;if(s_.tile||s_.ext)continue;const sk=new THREE.Mesh(new THREE.BoxGeometry(len,.07,.012),SKIRT);sk.position.set(cx+nx*sd*(T/2+.006),.035,cz+nz*sd*(T/2+.006));sk.rotation.y=ang;skirts.push(sk)}
@@ -1117,7 +1121,7 @@ function rebuild_(){
  ceilG=new THREE.Group();buildG.add(ceilG);
  for(const rm of S.rooms){if(rm.pts.length<3)continue;
   const sh=new THREE.Shape(rm.pts.map(p=>new THREE.Vector2(p[0],-p[1])));(SH.floor[LVo.i]||[]).forEach(q=>{if(q.some(p=>inPoly(p[0],p[1],rm.pts)))sh.holes.push(new THREE.Path(q.map(p=>new THREE.Vector2(p[0],-p[1]))))});
-  const fg=new THREE.ShapeGeometry(sh);if(rm.floorRot??S.floorRot){const uv=fg.attributes.uv;for(let i=0;i<uv.count;i++){const u=uv.getX(i);uv.setXY(i,uv.getY(i),u)}}const f=new THREE.Mesh(fg,getFloorTex(rm.floor||'eik'));f.rotation.x=-PI/2;f.position.y=.001;f.userData={room:rm.id};f.receiveShadow=true;buildG.add(f);
+  const fg=new THREE.ShapeGeometry(sh);if(rm.floorRot??S.floorRot){const uv=fg.attributes.uv;for(let i=0;i<uv.count;i++){const u=uv.getX(i);uv.setXY(i,uv.getY(i),u)}}const f=new THREE.Mesh(fg,(rm.floorTex?utsnittMat(rm.floorTex,1/(rm.floorTexM||.6),1/(rm.floorTexM||.6),0,0,rm.floorRough??.45):getFloorTex(rm.floor||'eik')));f.rotation.x=-PI/2;f.position.y=.001;f.userData={room:rm.id};f.receiveShadow=true;buildG.add(f);
   if(rm.tak&&rm.tak.h>Hh+.05){saltak(rm,Hh);continue}
   const sh2=new THREE.Shape(rm.pts.map(p=>new THREE.Vector2(p[0],p[1])));(SH.ceil[LVo.i]||[]).forEach(q=>{if(q.some(p=>inPoly(p[0],p[1],rm.pts)))sh2.holes.push(new THREE.Path(q.map(p=>new THREE.Vector2(p[0],p[1]))))});
   const c=new THREE.Mesh(new THREE.ShapeGeometry(sh2),rm.ceilWood?ceilWoodMat(rm.ceilWood):CEIL);c.rotation.x=PI/2;c.position.y=Hh;c.userData={ceil:1};c.castShadow=c.receiveShadow=true;ceilG.add(c)}
@@ -1320,7 +1324,7 @@ async function kvalitetssjekk(vis=true){
     if(along<(wa+wb)/2-.005)ov.push((CAT[A.type].n)+' og '+(CAT[B.type].n)+' ved ('+A.x.toFixed(2)+', '+A.z.toFixed(2)+')')}}
    add(ov.length?'feil':'ok','Vinduer og dører som overlapper',ov.length?ov.join('; '):'ingen')}
   // møbler som står i en døråpning eller rett foran/bak den (0,45 m ut på begge sider): man kan ikke gå gjennom
-  {const DOORT=new Set(['apning','ytterdor','dor','skyvedor','balkongdor']),SKIP=new Set(['teppe','ryeteppe','pynt','trapp','rekkverk','plen','terrasse','hageflis','grus','steinsti','pledd','polyflate','utetrapp','portal']);const bl=[];
+  {const DOORT=new Set(['apning','ytterdor','dor','skyvedor','balkongdor']),SKIP=new Set(['teppe','ryeteppe','matte_rund','pynt','trapp','rekkverk','plen','terrasse','hageflis','grus','steinsti','pledd','polyflate','utetrapp','portal']);const bl=[];
    for(const L of levelList()){const dr=L.items.filter(i=>DOORT.has(i.type)&&(i.y??CAT[i.type].y)-dims(i).h/2<.15);
     const fu=L.items.filter(i=>{const c=CAT[i.type];return c&&c.m==='floor'&&!c.flat&&!SKIP.has(i.type)&&!(i.elev>0)});
     for(const D of dr){const ux=Math.cos(D.rot),uz=-Math.sin(D.rot),nx=Math.sin(D.rot),nz=Math.cos(D.rot),hw=dims(D).w/2-.08;
@@ -1627,10 +1631,10 @@ function artTex(kind,w,h){const N=512,Mh=Math.round(N*h/w);return cvTex(N,Mh,(x,
   for(let i=0;i<34;i++){x.strokeStyle=C[i%C.length];x.globalAlpha=.85;x.lineWidth=14+rnd01()*34;x.lineCap='round';x.beginPath();const sx=rnd01()*W,sy=rnd01()*H;x.moveTo(sx,sy);x.quadraticCurveTo(rnd01()*W,rnd01()*H,sx+(rnd01()-.5)*W*.7,sy+(rnd01()-.5)*H*.7);x.stroke()}x.globalAlpha=1}
  else{x.fillStyle='#f1ece4';x.fillRect(0,0,W,H);x.strokeStyle='#8b7a68';x.lineWidth=3;for(let i=0;i<7;i++){x.beginPath();x.moveTo(W*.5,H*.9);x.quadraticCurveTo(W*(.2+i*.1),H*.5,W*(.25+i*.08),H*(.15+rnd01()*.2));x.stroke()}}
  for(let i=0;i<9000;i++){x.fillStyle=`rgba(0,0,0,${rnd01()*.025})`;x.fillRect(rnd01()*W,rnd01()*H,2,2)}},[1,1],true)}
-function frameArt(g,w,h,kind,frameCol,mount=.05){const F=mat(frameCol,{roughness:.5});const f=.022,dp=.03;
+function frameArt(g,w,h,kind,frameCol,mount=.05,bilde=null){const F=mat(frameCol,{roughness:.5});const f=.022,dp=.03;
  bx(g,w,f,dp,F,0,h/2-f/2,dp/2);bx(g,w,f,dp,F,0,-h/2+f/2,dp/2);bx(g,f,h-2*f,dp,F,-w/2+f/2,0,dp/2);bx(g,f,h-2*f,dp,F,w/2-f/2,0,dp/2);
  bx(g,w-2*f,h-2*f,.004,mat('#fbfaf7',{roughness:.9}),0,0,.012);const aw=w-2*f-2*mount,ah=h-2*f-2*mount;
- bx(g,aw,ah,.002,new THREE.MeshStandardMaterial({map:artTex(kind,aw,ah),roughness:.85}),0,0,.015);bx(g,w-2*f,h-2*f,.002,GLASS2,0,0,.026)}
+ bx(g,aw,ah,.002,new THREE.MeshStandardMaterial({map:bilde?(()=>{const t=utsnittTex(bilde).clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return t})():artTex(kind,aw,ah),roughness:.85}),0,0,.015);bx(g,w-2*f,h-2*f,.002,GLASS2,0,0,.026)}
 
 Object.assign(CAT,{
  hjornesofa:{n:'Hjørnesofa m/sjeselong',g:'Stue',i:'🛋️',m:'floor',w:2.75,d:1.6,h:.78,col:'#8c8279',snap:1},
@@ -1699,7 +1703,7 @@ Object.assign(B,{
    if(!m){const a=SHAG.clone();a.needsUpdate=true;a.repeat.set(w/.3,d/.3);m=new THREE.MeshStandardMaterial({color:col.clone().multiplyScalar(.62+.38*t),alphaMap:a,alphaTest:.12+.75*t,alphaToCoverage:true,roughness:1,side:THREE.DoubleSide});matCache.set(key,m)}
    const pl=msh(g,new THREE.PlaneGeometry(w-.01-k*.007,d-.01-k*.007),m,0,.008+t*.028,0);pl.rotation.x=-PI/2;pl.userData.noShadow=1;pl.userData.ptSkip=1}
   g.children[0].userData.ptMat=matFor('boucle',col.getStyle())},
- kunst(g,w,d,h,M,it){frameArt(g,w,h,it.art??0,it.color||CAT.kunst.col,it.mount??.05)},
+ kunst(g,w,d,h,M,it){frameArt(g,w,h,it.art??0,it.color||CAT.kunst.col,it.mount??.05,it.bilde||null)},
  gulvlampe2(g,w,d,h,M,it){const on=lampOn(it);lathe(g,[[0,0],[.13,0],[.14,.006],[.13,.018],[.02,.024],[0,.024]],BLACKM,0,0,0,40);cyl(g,.009,.009,h-.22,BLACKM,0,(h-.22)/2+.02,0);
   const sh=mat(it.color||CAT.gulvlampe2.col,{side:THREE.DoubleSide,roughness:1,emissive:'#ffd9a6',emissiveIntensity:on?.55:0});const s=cyl(g,w/2*.9,w/2,.3,sh,0,h-.15,0,true);s.material=sh;s.userData.own=1;
   msh(g,new THREE.SphereGeometry(.04,16,12),glow('#fff6e6',on,3),0,h-.2,0);g.userData.lp=new THREE.Vector3(0,h-.2,0)},
@@ -2153,7 +2157,7 @@ function stairEnds(st){if(st.it.type==='trapp_u'){const P=trappUP(st.it);return{
  Finner feil man ser med en gang man går rundt: bilder og skap som henger over dører/vinduer eller i lufta, møbler som står inni
  hverandre, trapper som går inn i vegger eller mangler plass å gå av på, dører som ikke treffer bakken og bygg som svever. */
 const VEGGTING=new Set(['bilde','kunst','speil','rundspeil','vegghylle','overskap','overskap2','speilskap','tv','knagger','hattehylle','panelovn','sikringsskap','varmepumpe','vegglampe','vegglykt','termostat','porttelefon']);
-const IKKE_KOLL=new Set(['teppe','ryeteppe','pynt','plen','terrasse','hageflis','grus','steinsti','pledd','hustak','valmtak','flattak','tre','busk','hekk','gardin','gardin2','solskjerm','brystning','panelvegg','strukturtapet','metroflis','flisespeil','garasjeport','dusjsett','dusjvegg','dusjforheng','rekkverk','teglsoyle','overbygg','polyflate','karnapptak','utetrapp','portal']);
+const IKKE_KOLL=new Set(['teppe','ryeteppe','matte_rund','pynt','plen','terrasse','hageflis','grus','steinsti','pledd','hustak','valmtak','flattak','tre','busk','hekk','gardin','gardin2','solskjerm','brystning','panelvegg','strukturtapet','metroflis','flisespeil','garasjeport','dusjsett','dusjvegg','dusjforheng','rekkverk','teglsoyle','overbygg','polyflate','karnapptak','utetrapp','portal']);
 function segX(a,b,c,d){const r=(p,q,s)=>(q[0]-p[0])*(s[1]-p[1])-(q[1]-p[1])*(s[0]-p[0]),d1=r(c,d,a),d2=r(c,d,b),d3=r(a,b,c),d4=r(a,b,d);return d1*d2<-1e-9&&d3*d4<-1e-9}
 function geoBox(it){const c=CAT[it.type];if(!c||c.open||c.light||c.flat||c.m==='ceiling'||IKKE_KOLL.has(it.type)||STAIRT.has(it.type)||it.ground)return null;if(c.m==='wall'&&!VEGGTING.has(it.type))return null;
  const D=dims(it),r=it.rot||0,ux=Math.cos(r),uz=-Math.sin(r),nx=Math.sin(r),nz=Math.cos(r);let cx=it.x,cz=it.z,y0,y1;
@@ -2404,7 +2408,7 @@ Object.assign(B,{
   for(let i=0;i<7;i++)bx(g,.008,.07,.008,Wt,-w/2+.05+i*(w-.1)/6,fh+.04,d/2-.01);bx(g,w-.06,.008,.008,Wt,0,fh+.075,d/2-.01);
   rbx(g,.12,.08,.08,mat('#ef7fb0'),-.12,t+.04,.03,.02);rbx(g,.1,.12,.06,mat('#b1d9f2'),.14,fh+.06,0,.02)},
  skyvegarderobe(g,w,d,h,M,it){const body=mat(it.color||CAT.skyvegarderobe.col,{roughness:.5}),ds=it.doors||['#2a2a2c','speil'];bx(g,w,h,d-.05,body,0,h/2,-.025);bx(g,w-.006,.054,.03,body,0,h-.03,d/2-.015);
-  const dw=w/2+.02;ds.forEach((k,i)=>{const x=(i?1:-1)*(w/2-dw/2),z=d/2-(i?.038:.015);let m;if(k==='speil')m=mat('#dfe6e8',{metalness:.85,roughness:.04});else if(k==='eik')m=OAK('#c99f68');else m=mat(k,{roughness:.45});
+  const dw=w/2+.02;ds.forEach((k,i)=>{const x=(i?1:-1)*(w/2-dw/2),z=d/2-(i?.038:.015);let m;if(k==='speil')m=MIRROR;else if(k==='eik')m=OAK('#c99f68');else m=mat(k,{roughness:.45});
    bx(g,dw,h-.08,.02,m,x,(h-.08)/2+.02,z);if(k==='speil'){const zf=z+.006;bx(g,dw-.002,.03,.022,body,x,h-.07,zf);bx(g,dw-.002,.03,.022,body,x,.035,zf);bx(g,.03,h-.14,.022,body,x-dw/2+.016,(h-.08)/2+.02,zf);bx(g,.03,h-.14,.022,body,x+dw/2-.016,(h-.08)/2+.02,zf);bx(g,dw-.064,.02,.022,body,x,h*.62,zf)}
    else bx(g,.012,.4,.01,mat('#9b9ea2',{metalness:.7}),x+(i?-1:1)*(dw/2-.05),1.05,z+.015)})},
  nodskilt(g,w,d,h,M,it){bx(g,w,h,d,mat('#1f9d55',{emissive:'#25c46a',emissiveIntensity:.9}),0,0,d/2);const W_=mat('#ffffff',{emissive:'#ffffff',emissiveIntensity:.6});
@@ -2442,7 +2446,7 @@ Object.assign(B,{garderobe_aapen(g,w,d,h,M,it){const W_=mat(it.color||CAT.garder
  bx(g,w,h,.01,W_,0,h/2,-d/2+.005);for(let i=0;i<=n;i++)bx(g,t,h,d,W_,-w/2+i*cw+(i===0?t/2:i===n?-t/2:0),h/2,0);bx(g,w,t,d,W_,0,h-t/2,0);bx(g,w,.06,d,W_,0,.03,0);
  const cols=['#3b3f5c','#7a2f3a','#5c6b7a','#2e2e30','#b8a48c','#6a8a9a','#8a5a6a','#d8d2c8'];let s=w*97;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280};
  for(let i=0;i<n;i++){const x0=-w/2+i*cw+t,iw=cw-2*t,xc=x0+iw/2;bx(g,iw,t,d-.02,W_,xc,1.75,0);rod(g,[x0,1.68,0],[x0+iw,1.68,0],.012,.012,CHROME,8);
-  let x=x0+.04;while(x<x0+iw-.05){const cw2=.03+rnd()*.05,ch=.55+rnd()*.5;bx(g,cw2,ch,d*.75,fab(cols[Math.floor(rnd()*cols.length)]),x+cw2/2,1.66-ch/2,0);x+=cw2+.005}
+  let x=x0+.04;while(x<x0+iw-.05){const cw2=.035+rnd()*.045,ch=.55+rnd()*.5,xc2=x+cw2/2;/* klær: myke plagg på kleshenger (meglertest: «flate planker») */const pl=sbx(g,cw2,ch,d*.62,fab(cols[Math.floor(rnd()*cols.length)]),xc2,1.6-ch/2,0,.016,.012);pl.rotation.y=(rnd()-.5)*.12;pl.rotation.z=(rnd()-.5)*.03;sbx(g,cw2+.006,.05,d*.5,pl.material,xc2,1.6-.02,0,.02,.01);rod(g,[xc2,1.62,-d*.24],[xc2,1.62,d*.24],.003,.003,CHROME,4);rod(g,[xc2,1.62,0],[xc2,1.69,0],.003,.003,CHROME,4);x+=cw2+.006}
   if(i%2===0)for(let j=0;j<3;j++){bx(g,iw-.01,.16,.02,W_,xc,.12+j*.18+.08,d/2-.02);bx(g,iw*.5,.012,.012,mat('#bbb'),xc,.12+j*.18+.13,d/2-.005)}
   else{bx(g,iw,t,d-.02,W_,xc,.6,0);rbx(g,iw*.6,.12,d*.6,mat('#2f6fb0',{roughness:.6}),xc,.68,0,.01)}
   for(let k=0;k<3;k++)rbx(g,iw*.25,.1,d*.6,fab(cols[(i+k)%cols.length]),x0+.08+k*iw*.3,1.83,0,.02)}}});
@@ -2799,6 +2803,151 @@ for(const bt of ['kontinental','seng_ramme','dobbeltseng','enkeltseng','koyeseng
    if(c==='f4f2ed'||c==='f4f2ee'||o.material===M||c==='7e93b8'||c==='eef0f4')o.material=SM})}}
 
 
+/* ---------- v84 (meglertest runde 6, 15.11.2026): nye katalogvalg og typer fra byggernes manglerlister ----------
+   Kjøkken: kjokken2/overskap2/kjokkenoy  front:'profil' (rammefront), grep:'#hex' (farge på håndtak), knott:1 (knotter i stedet for stenger),
+            topc:'#hex' (benkeplate i stein, egen farge), stal:[kolonne,...] (oppvaskmaskin/stålfront i kolonne n, 0 = venstre),
+            overskap2 mikro:[kolonne,...] (innebygd mikro, sort glass).
+   Bad:     armatur:'#hex' (f.eks. '#1b1b1b' sort) på kjokken2, servant, veggservant, servantskap, dusjsett, dusj, dusjvegg, badekar, soyleservant, servant_oval.
+            dusjsett firkant:1 (firkantet regnhode).
+   Senger:  gavl:0 fjerner hodegavlen (dobbeltseng, enkeltseng, seng_ramme, kontinental).
+   Tekstil: monster:'kelim'|'sebra'|'rutet'|'stripe' på teppe, matte_rund, puff, pall.
+   Nye typer: soyleservant, servant_oval, dusj_buet, handkletork, skapseng, benk_eik, nattbord_rund, matte_rund, pendel2 (form), veggklokke,
+            projektor, stol_skall, bord_nest, sofabord_marmor, speil_ramme. */
+const V84_STAL=new THREE.MeshStandardMaterial({color:'#c9ccd0',metalness:.85,roughness:.32}),V84_SORTGLASS=new THREE.MeshPhysicalMaterial({color:'#121314',roughness:.06,clearcoat:1});
+const V84_ARM={},v84Arm=c=>V84_ARM[c]||(V84_ARM[c]=new THREE.MeshStandardMaterial({color:c,metalness:.55,roughness:.35}));
+const V84_MON={};function v84Monster(kind,col){const k=kind+'|'+(col||'');if(V84_MON[k])return V84_MON[k];
+ const t=cvTex(512,0,(x,N)=>{
+  if(kind==='sebra'){x.fillStyle='#f2f0eb';x.fillRect(0,0,N,N);x.fillStyle='#161616';for(let i=0;i<14;i++){x.beginPath();const y0=i*N/14;x.moveTo(0,y0);for(let s=0;s<=N;s+=8)x.lineTo(s,y0+Math.sin(s/40+i)*10+Math.sin(s/13+i*2)*4);for(let s=N;s>=0;s-=8)x.lineTo(s,y0+12+Math.sin(s/37+i*1.3)*9);x.closePath();x.fill()}}
+  else if(kind==='kelim'){const c=col||'#9c3b2c';x.fillStyle='#e6d9c3';x.fillRect(0,0,N,N);for(let b=0;b<4;b++){const y=b*N/4;x.fillStyle=b%2?c:'#2f3a4a';x.fillRect(0,y,N,14);x.fillRect(0,y+N/4-14,N,14);x.fillStyle=b%2?'#2f3a4a':c;for(let i=0;i<8;i++){const cx=i*N/8+N/16,cy=y+N/8;x.beginPath();x.moveTo(cx,cy-38);x.lineTo(cx+30,cy);x.lineTo(cx,cy+38);x.lineTo(cx-30,cy);x.closePath();x.fill()}x.fillStyle='#e6d9c3';for(let i=0;i<8;i++){const cx=i*N/8+N/16,cy=y+N/8;x.fillRect(cx-8,cy-8,16,16)}}}
+  else if(kind==='rutet'){x.fillStyle='#efede8';x.fillRect(0,0,N,N);x.fillStyle=col||'rgba(70,80,95,.55)';for(let i=0;i<8;i++){x.fillRect(i*64,0,26,N);x.fillRect(0,i*64,N,26)}}
+  else{x.fillStyle='#f2f0ec';x.fillRect(0,0,N,N);x.fillStyle=col||'#3f4f66';for(let i=0;i<16;i++)x.fillRect(i*32,0,12,N)}
+ },[1,1],true);
+ return V84_MON[k]=new THREE.MeshStandardMaterial({map:t,roughness:1,bumpMap:KNIT,bumpScale:1.5})}
+const V84_MARMOR=(()=>{const t=cvTex(512,0,(x,N)=>{x.fillStyle='#f1eee8';x.fillRect(0,0,N,N);let s=11;const R=()=>(s=(s*9301+49297)%233280)/233280;
+ for(let i=0;i<9;i++){x.strokeStyle=`rgba(120,112,104,${.12+R()*.2})`;x.lineWidth=.6+R()*2.2;x.beginPath();let px=R()*N,py=0;x.moveTo(px,py);while(py<N){px+=(R()-.5)*40;py+=12+R()*20;x.lineTo(px,py)}x.stroke()}},[1,1],true);return c=>{const m=new THREE.MeshPhysicalMaterial({color:c||'#ffffff',map:t,roughness:.18,clearcoat:.5});m.userData.own=1;return m}})();
+
+/* kjøkkenfronter: profil, håndtak, knotter, stein, oppvaskmaskin og mikro */
+function v84Fronter(g,w,it,fw0){if(!it)return;const fr=[],hd=[];
+ g.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.parameters;if(p&&p.depth===.018&&o.geometry.type==='BoxGeometry')fr.push(o);else if(o.material===HANDLE)hd.push(o)});
+ const kol=o=>Math.floor((o.position.x+w/2)/(w/Math.max(1,Math.round(w/fw0)))+1e-6);
+ const spesial=[...(it.stal||[]).map(i=>[i,'stal']),...(it.mikro||[]).map(i=>[i,'mikro'])];
+ for(const[i,kind]of spesial){const fs=fr.filter(o=>o.parent===g&&kol(o)===i);if(!fs.length)continue;
+  let y0=1e9,y1=-1e9,x=0,z=0,fwi=0;for(const o of fs){const p=o.geometry.parameters;y0=Math.min(y0,o.position.y-p.height/2);y1=Math.max(y1,o.position.y+p.height/2);x=o.position.x;z=o.position.z;fwi=p.width;g.remove(o);fr.splice(fr.indexOf(o),1)}
+  for(const o of hd.filter(o=>o.parent===g&&Math.abs(o.position.x-x)<fwi/2)){g.remove(o);hd.splice(hd.indexOf(o),1)}
+  const hh=y1-y0,yc=(y0+y1)/2;
+  if(kind==='stal'){bx(g,fwi,hh,.018,V84_STAL,x,yc,z);bx(g,fwi,.06,.02,mat('#2a2b2d',{roughness:.3}),x,y1-.03,z+.002);bx(g,fwi*.75,.016,.022,V84_STAL,x,y1-.1,z+.02)}
+  else{bx(g,fwi,hh,.018,V84_SORTGLASS,x,yc,z);bx(g,fwi*.62,hh*.62,.004,mat('#050505',{roughness:.05}),x-fwi*.1,yc,z+.01);bx(g,.016,hh*.5,.02,V84_STAL,x+fwi/2-.05,yc,z+.02);bx(g,.08,.012,.004,mat('#2b6',{emissive:'#2b6',emissiveIntensity:.6}),x+fwi/2-.12,y1-.05,z+.011)}}
+ if(it.front==='profil')for(const o of fr){const p=o.geometry.parameters,P=o.parent,m=o.material,b=Math.min(.055,p.width*.12,p.height*.18),zf=o.position.z+.009+.003;
+  bx(P,p.width,b,.01,m,o.position.x,o.position.y+p.height/2-b/2,zf);bx(P,p.width,b,.01,m,o.position.x,o.position.y-p.height/2+b/2,zf);
+  bx(P,b,p.height-2*b,.01,m,o.position.x-p.width/2+b/2,o.position.y,zf);bx(P,b,p.height-2*b,.01,m,o.position.x+p.width/2-b/2,o.position.y,zf)}
+ if(it.grep||it.knott){const GM=it.grep?new THREE.MeshStandardMaterial({color:it.grep,metalness:.6,roughness:.35}):HANDLE;
+  for(const o of hd){if(it.knott){const P=o.parent,k=cyl(P,.013,.011,.028,GM,o.position.x,o.position.y,o.position.z+(it.front==='profil'?.008:0));k.rotation.x=PI/2;P.remove(o)}else{o.material=GM;if(it.front==='profil')o.position.z+=.006}}}
+ else if(it.front==='profil')for(const o of hd)o.position.z+=.006;
+ if(it.topc){const TM=new THREE.MeshPhysicalMaterial({color:it.topc,roughness:.3,clearcoat:.35});g.traverse(o=>{const p=o.isMesh&&o.geometry.parameters;if(p&&o.geometry.type==='BoxGeometry'&&(p.height===.03||p.height===.04)&&Math.abs(p.width-w)<.003&&p.depth>.3)o.material=TM})}}
+{const kb=B.kjokken2;B.kjokken2=function(g,w,d,h,M,it){kb(g,w,d,h,M,it);v84Fronter(g,w,it,.6)}}
+{const ob=B.overskap2;B.overskap2=function(g,w,d,h,M,it){ob(g,w,d,h,M,it);v84Fronter(g,w,it,.4)}}
+{const kb=B.kjokkenoy;B.kjokkenoy=function(g,w,d,h,M,it){kb(g,w,d,h,M,it);if(it)v84Fronter(g,w,{...it,stal:null,mikro:null},.6)}}
+
+/* nye typer */
+Object.assign(CAT,{
+ soyleservant:{n:'Søyleservant (på fot)',g:'Bad',i:'🚰',m:'floor',w:.55,d:.45,h:.85,col:'#ffffff',snap:1},
+ servant_oval:{n:'Servant, oval vegghengt',g:'Bad',i:'🚰',m:'floor',w:.55,d:.45,h:.84,col:'#ffffff',snap:1},
+ dusj_buet:{n:'Dusjhjørne, buet glass',g:'Bad',i:'🚿',m:'floor',w:.9,d:.9,h:1.95,col:'#f4f4f2',snap:1},
+ handkletork:{n:'Håndkletørker (varmerør)',g:'Bad',i:'🧺',m:'wall',w:.5,d:.08,h:.8,y:1.0,col:'#f7f7f5'},
+ skapseng:{n:'Skapseng (seng i skap)',g:'Soverom',i:'🛏️',m:'floor',w:1.0,d:2.1,h:2.1,col:'#d9b98c',snap:1},
+ benk_eik:{n:'Benk, massiv eik (uten pute)',g:'Stue',i:'🪵',m:'floor',w:1.8,d:.35,h:.45,col:'#b88a5a',snap:1},
+ nattbord_rund:{n:'Nattbord, rundt m/kryssfot',g:'Soverom',i:'⚫',m:'floor',w:.45,d:.45,h:.55,col:'#6b4a33'},
+ matte_rund:{n:'Rund matte/teppe',g:'Stue',i:'⚪',m:'floor',w:1.2,d:1.2,h:.012,col:'#8a6a4f'},
+ pendel2:{n:'Pendel (form: kule, ribbet, kube, kuppel, papir, sylinder)',g:'Lys',i:'💡',m:'ceiling',w:.3,d:.3,h:.8,light:1,col:'#1e1e1e'},
+ veggklokke:{n:'Veggklokke, rund',g:'Stue',i:'🕒',m:'wall',w:.4,d:.04,h:.4,y:1.8,col:'#1e1e1e'},
+ projektor:{n:'Projektor (tak)',g:'Stue',i:'📽️',m:'ceiling',w:.3,d:.25,h:.35,col:'#1f1f1f'},
+ stol_skall:{n:'Skallstol (4 ben, trådben eller tre)',g:'Stue',i:'🪑',m:'floor',w:.47,d:.52,h:.81,col:'#f2f1ee'},
+ bord_nest:{n:'Nestebord, 2 stk sort metall',g:'Stue',i:'⬛',m:'floor',w:.9,d:.55,h:.42,col:'#1e1e1e'},
+ sofabord_marmor:{n:'Sofabord, marmor m/gullramme og hylle',g:'Stue',i:'⚪',m:'floor',w:.8,d:.8,h:.42,col:'#efebe4'},
+ speil_ramme:{n:'Speil m/ramme, evt. organisk m/LED',g:'Bad',i:'🪞',m:'wall',w:.6,d:.03,h:.8,y:1.5,col:'#c8a24a'},
+});
+function v84Skal(g,w,d,y,m){const sh=new THREE.Shape();sh.absellipse(0,0,w/2-.012,d/2-.012,0,PI*2);const ge=new THREE.ExtrudeGeometry(sh,{depth:.13,bevelEnabled:true,bevelSize:.012,bevelThickness:.012,curveSegments:48,bevelSegments:3});ge.rotateX(-PI/2);
+ msh(g,ge,m,0,y-.13-.012,0);const b=msh(g,new THREE.CircleGeometry(1,48),mat('#e3e9eb',{roughness:.12}),0,y+.0125,.02);b.scale.set(w/2-.07,d/2-.08,1);b.rotation.x=-PI/2;
+ const C=CHROME;cyl(g,.016,.018,.14,C,0,y+.08,-d/2+.06);rod(g,[0,y+.14,-d/2+.06],[0,y+.15,-d/2+.17],.011,.011,C,8);cyl(g,.006,.006,.06,C,.03,y+.17,-d/2+.06)}
+Object.assign(B,{
+ soyleservant(g,w,d,h,M,it){const P=it.color?new THREE.MeshPhysicalMaterial({color:it.color,roughness:.12,clearcoat:.6}):PORC;lathe(g,[[0,0],[.13,0],[.12,.03],[.085,.12],[.07,.4],[.08,h-.25],[.13,h-.15],[0,h-.15]],P,0,0,-.04,40);v84Skal(g,w,d,h,P)},
+ servant_oval(g,w,d,h,M,it){const P=it.color?new THREE.MeshPhysicalMaterial({color:it.color,roughness:.12,clearcoat:.6}):PORC;v84Skal(g,w,d,h,P);cyl(g,.03,.03,.3,CHROME,0,h-.33,-d/2+.1);rod(g,[0,h-.45,-d/2+.1],[0,h-.45,-d/2],.02,.02,CHROME,8)},
+ dusj_buet(g,w,d,h,M,it){const r=Math.min(w,d),cx=-w/2,cz=-d/2,R_=it.ramme?mat(it.ramme,{roughness:.4,metalness:.4}):CHROME;
+  const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(r,0);sh.absarc(0,0,r,0,PI/2,false);sh.lineTo(0,0);const ge=new THREE.ExtrudeGeometry(sh,{depth:.05,bevelEnabled:false,curveSegments:40});ge.rotateX(PI/2);msh(g,ge,PORC,cx,.05,cz);
+  cyl(g,.035,.035,.004,CHROME,cx+r*.35,.052,cz+r*.35);
+  const gl=new THREE.Mesh(new THREE.CylinderGeometry(r-.03,r-.03,h-.06,48,1,true,0,PI/2),GLASS2);gl.position.set(cx,.06+(h-.06)/2,cz);g.add(gl);
+  const t=new THREE.Mesh(new THREE.TorusGeometry(r-.03,.009,6,64,PI/2),R_);t.rotation.x=PI/2;t.position.set(cx,h,cz);g.add(t);
+  bx(g,.025,h-.05,.03,R_,cx+r-.03,.05+(h-.05)/2,cz+.015);bx(g,.03,h-.05,.025,R_,cx+.015,.05+(h-.05)/2,cz+r-.03);
+  const a=PI/4;rod(g,[cx+Math.sin(a)*(r-.0)+.02,1.0,cz+Math.cos(a)*(r)+.02],[cx+Math.sin(a)*(r)+.02,1.3,cz+Math.cos(a)*(r)+.02],.009,.009,R_,8)},
+ handkletork(g,w,d,h,M,it){const W_=new THREE.MeshPhysicalMaterial({color:it.color||CAT.handkletork.col,roughness:.2,clearcoat:.5,metalness:it.color&&/^#(1|2|3)/.test(it.color)?.3:0});
+  for(const s of[-1,1]){cyl(g,.014,.014,h,W_,s*(w/2-.02),0,.05);rod(g,[s*(w/2-.02),h/2-.05,.05],[s*(w/2-.02),h/2-.05,0],.008,.008,W_,6);rod(g,[s*(w/2-.02),-h/2+.05,.05],[s*(w/2-.02),-h/2+.05,0],.008,.008,W_,6)}
+  const n=Math.max(4,Math.round(h/.09));for(let i=0;i<n;i++){const y=-h/2+.04+i*(h-.08)/(n-1);const c=cyl(g,.009,.009,w-.04,W_,0,y,.05);c.rotation.z=PI/2}
+  if(it.handkle){const T=fab(it.handkle);sbx(g,w*.7,.32,.03,T,0,h/2-.2,.075,.01);sbx(g,w*.7,.28,.03,T,0,h/2-.2,.025,.01)}},
+ skapseng(g,w,d,h,M,it){const P=matFor('wood',it.color||CAT.skapseng.col),z0=-d/2,sd=.45,t=.03;
+  bx(g,w+2*t,h,t,P,0,h/2,z0+t/2);for(const s of[-1,1])bx(g,t,h,sd,P,s*(w/2+t/2),h/2,z0+sd/2);bx(g,w+2*t,.4,sd,P,0,h-.2,z0+sd/2);bx(g,w,.02,sd-.02,P,0,h-.41,z0+sd/2);
+  const ram=matFor('wood',it.color||CAT.skapseng.col);bx(g,w,.25,d-.02,ram,0,.2,.01);for(const sx of[-1,1])bx(g,.05,.08,.05,ram,sx*(w/2-.03),.04,d/2-.06);
+  sbx(g,w-.04,.2,d-.08,fab('#f6f5f2'),0,.42,.03,.04);const T=it.sengetoy?sengTex(it.sengetoy):fab(it.dyne||'#f2f0ec');sbx(g,w-.02,.08,d*.66,T,0,.56,d*.15,.05,.02);
+  sbx(g,w-.24,.13,.4,fab('#ebe6dd'),0,.6,z0+sd*.5+.15,.06,.03)},
+ benk_eik(g,w,d,h,M,it){const W_=matFor('wood',it.color||CAT.benk_eik.col),t=Math.min(.06,h*.14);bx(g,w,t,d,W_,0,h-t/2,0);for(const s of[-1,1])bx(g,Math.min(.07,w*.12),h-t,d-.04,W_,s*(w/2-Math.min(.2,w*.12)),(h-t)/2,0);
+  if(it.trekk)bx(g,w-.4,.04,.04,W_,0,.12,0)},
+ nattbord_rund(g,w,d,h,M,it){const W_=matFor('wood',it.color||CAT.nattbord_rund.col);cyl(g,w/2,w/2,.025,W_,0,h-.0125,0);cyl(g,.025,.03,h-.08,W_,0,(h-.025)/2+.02,0);
+  for(const a of[0,PI/2]){const b=bx(g,w*.8,.035,.05,W_,0,.0175,0);b.rotation.y=a+PI/4}if(it.hylle)cyl(g,w*.36,w*.36,.018,W_,0,h*.4,0)},
+ matte_rund(g,w,d,h,M,it){const m=it.monster?v84Monster(it.monster,it.mcol):matFor('boucle',it.color||CAT.matte_rund.col);const c=cyl(g,w/2,w/2,.012,m,0,.007,0);c.scale.z=d/w},
+ pendel2(g,w,d,h,M,it){const on=lampOn(it),f=it.form||'kule',r=w/2,col=it.color||CAT.pendel2.col;cyl(g,.045,.045,.025,mat(f==='kuppel'?col:'#1e1e1e',{roughness:.4}),0,-.0125,0);
+  const sh=f==='sylinder'?h:w;
+  if(it.kjetting){const K=mat('#6f6f6f',{metalness:.7,roughness:.4});for(let y=-.05,i=0;y>-(h-sh)+.02;y-=.045,i++){const l=new THREE.Mesh(new THREE.TorusGeometry(.012,.003,5,10),K);l.position.y=y;l.rotation.y=i%2?PI/2:0;g.add(l)}}
+  else if(h>sh+.01)cyl(g,.003,.003,h-sh,mat('#222'),0,-(h-sh)/2,0);
+  const GL=new THREE.MeshPhysicalMaterial({color:'#ffffff',roughness:.02,metalness:.1,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false});
+  const pære=(y,s=1)=>{const b=new THREE.Mesh(new THREE.SphereGeometry(.035*s,16,12),emis(on));b.position.y=y;g.add(b);g.userData.lp=new THREE.Vector3(0,y-.06,0)};
+  if(f==='kule'){const s=new THREE.Mesh(new THREE.SphereGeometry(r,32,20),GL);s.position.y=-h+r;s.userData.ptSkip=1;g.add(s);pære(-h+r,.8)}
+  else if(f==='ribbet'){const pts=[];for(let i=0;i<=12;i++){const k=i/12;pts.push(new THREE.Vector2(r*(.22+.78*Math.pow(k,.8)),-k*w*1.1))}const ge=new THREE.LatheGeometry(pts,96),p=ge.attributes.position;
+   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),a=Math.atan2(z,x),k=1+.035*Math.abs(Math.cos(a*14));p.setX(i,x*k);p.setZ(i,z*k)}ge.computeVertexNormals();
+   const s=msh(g,ge,new THREE.MeshPhysicalMaterial({color:it.glass||'#f4f2ee',roughness:.12,clearcoat:.6,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false}),0,-h+w*1.1,0);s.userData.ptSkip=1;pære(-h+w*.55)}
+  else if(f==='kube'){const K=mat(col,{metalness:.5,roughness:.4}),y0=-h,y1=-h+w,a=r;for(const[x,z]of[[-a,-a],[a,-a],[a,a],[-a,a]])rod(g,[x,y0,z],[x,y1,z],.004,.004,K,6);
+   for(const y of[y0,y1])for(const[p0,p1]of[[[-a,-a],[a,-a]],[[a,-a],[a,a]],[[a,a],[-a,a]],[[-a,a],[-a,-a]]])rod(g,[p0[0],y,p0[1]],[p1[0],y,p1[1]],.004,.004,K,6);pære(-h+r,1.4)}
+  else if(f==='kuppel'){const K=new THREE.MeshPhysicalMaterial({color:col,roughness:.25,clearcoat:.8,side:THREE.DoubleSide});K.userData.own=1;const pts=[];for(let i=0;i<=16;i++){const a=i/16*PI/2;pts.push(new THREE.Vector2(Math.max(.02,r*Math.sin(a)),r*.7*Math.cos(a)))}pts.push(new THREE.Vector2(r*1.04,-.01));
+   msh(g,new THREE.LatheGeometry(pts,48),K,0,-h+.01,0);msh(g,new THREE.CircleGeometry(r*.95,40),mat('#f6f4ef',{emissive:'#fff2dc',emissiveIntensity:on?.5:0,side:THREE.DoubleSide}),0,-h+.01,0).rotation.x=PI/2;pære(-h+.06)}
+  else if(f==='papir'){const s=new THREE.Mesh(new THREE.SphereGeometry(r,32,20),mat('#f6f2ea',{roughness:.9,emissive:'#ffe9c8',emissiveIntensity:on?.55:0}));s.position.y=-h+r;s.userData.own=1;g.add(s);
+   for(let i=1;i<6;i++){const yy=-r+i*2*r/6,rr=Math.sqrt(r*r-yy*yy)+.002;const t=new THREE.Mesh(new THREE.TorusGeometry(rr,.0015,4,48),mat('#ddd6ca'));t.rotation.x=PI/2;t.position.y=-h+r+yy;g.add(t)}g.userData.lp=new THREE.Vector3(0,-h-.04,0)}
+  else{const s=cyl(g,r,r,h,mat(col,{roughness:.35,side:THREE.DoubleSide}),0,-h/2,0,true);s.userData.own=1;msh(g,new THREE.CircleGeometry(r*.9,32),emis(on),0,-h+.02,0).rotation.x=PI/2;g.userData.lp=new THREE.Vector3(0,-h-.04,0)}},
+ veggklokke(g,w,d,h,M,it){const r=w/2,K=mat(it.color||CAT.veggklokke.col,{roughness:.4,metalness:.3});msh(g,new THREE.CircleGeometry(r-.01,64),mat(it.skive||'#f7f6f2',{roughness:.6}),0,0,.02);
+  msh(g,new THREE.TorusGeometry(r-.008,.012,10,72),K,0,0,.022);for(let i=0;i<12;i++){const a=i/12*PI*2;const b=bx(g,.008,i%3?.025:.045,.002,K,Math.sin(a)*(r-.05),Math.cos(a)*(r-.05),.022);b.rotation.z=-a}
+  bx(g,.012,r*.5,.003,K,0,r*.22,.026);const tm=new THREE.Group();tm.position.z=.026;tm.rotation.z=-2.2;g.add(tm);bx(tm,.01,r*.72,.003,K,0,r*.33,0);cyl(g,.012,.012,.008,K,0,0,.03).rotation.x=PI/2},
+ projektor(g,w,d,h,M,it){const K=mat(it.color||CAT.projektor.col,{roughness:.45});cyl(g,.05,.05,.015,K,0,-.0075,0);cyl(g,.012,.012,h-.12,K,0,-(h-.12)/2,0);rbx(g,w,.1,d,K,0,-h+.05,0,.02);
+  const l=cyl(g,.035,.035,.03,mat('#0d0d0e',{roughness:.05}),w*.22,-h+.05,d/2+.01);l.rotation.x=PI/2},
+ stol_skall(g,w,d,h,M,it){const S_=it.tre?matFor('wood',it.color||'#b88a5a'):new THREE.MeshPhysicalMaterial({color:it.color||CAT.stol_skall.col,roughness:.35,clearcoat:.3,side:THREE.DoubleSide});S_.userData.own=1;
+  const sy=.44,se=sbx(g,w-.04,.04,d*.72,S_,0,sy,.03,.02);
+  const rb=new THREE.Mesh(new THREE.CylinderGeometry(w/2-.02,w/2-.04,it.buet?.16:.36,32,1,true,PI*.62,PI*.76),S_);rb.scale.z=.55;rb.position.set(0,sy+(it.buet?.27:.2),-d/2+.2);g.add(rb);
+  if(it.buet){for(const s of[-1,1])bx(g,.03,.22,.03,S_,s*(w/2-.07),sy+.12,-d/2+.12)}
+  const L=mat(it.ben||'#c9ccd0',{metalness:it.ben&&!/^#[0-4]/.test(it.ben)?.1:.85,roughness:.3});const tr=it.trad;
+  for(const sx of[-1,1])for(const sz of[-1,1])rod(g,[sx*(w/2-.08),sy-.02,sz*(d/2-.14)],[sx*(w/2-.03),0,sz*(d/2-.04)],.009,.009,L,8);
+  if(tr){for(const sx of[-1,1])rod(g,[sx*(w/2-.05),.14,-(d/2-.08)],[sx*(w/2-.05),.14,d/2-.08],.004,.004,L,6);for(const sz of[-1,1])rod(g,[-(w/2-.05),.14,sz*(d/2-.08)],[w/2-.05,.14,sz*(d/2-.08)],.004,.004,L,6);
+   for(const sx of[-1,1])rod(g,[sx*(w/2-.05),.14,-(d/2-.08)],[-sx*(w/2-.05),.14,d/2-.08],.003,.003,L,6)}},
+ bord_nest(g,w,d,h,M,it){const K=mat(it.color||CAT.bord_nest.col,{metalness:.5,roughness:.35}),T=it.plate?(it.plate==='marmor'?V84_MARMOR('#ffffff'):it.plate==='eik'?OAK('#cdae86'):mat(it.plate,{roughness:.3})):K;
+  const bord=(bw,bd,bh,x,z)=>{bx(g,bw,.02,bd,T,x,bh-.01,z);for(const sx of[-1,1])for(const sz of[-1,1])bx(g,.018,bh-.02,.018,K,x+sx*(bw/2-.02),(bh-.02)/2,z+sz*(bd/2-.02));
+   for(const sz of[-1,1])bx(g,bw-.04,.018,.018,K,x,bh-.03,z+sz*(bd/2-.02));for(const sx of[-1,1])bx(g,.018,.018,bd-.04,K,x+sx*(bw/2-.02),bh-.03,z)};
+  const w1=w*.62,d1=d;bord(w1,d1,h,-w/2+w1/2,0);bord(w*.5,d*.8,h*.82,w/2-w*.25,d*.08)},
+ sofabord_marmor(g,w,d,h,M,it){const G_=mat(it.ramme||'#c8a24a',{metalness:.9,roughness:.28}),Mm=V84_MARMOR(it.color||CAT.sofabord_marmor.col),r=w/2;
+  const top=cyl(g,r-.01,r-.01,.022,Mm,0,h-.011,0);top.scale.z=d/w;const ring=new THREE.Mesh(new THREE.TorusGeometry(r-.005,.01,8,72),G_);ring.rotation.x=PI/2;ring.position.y=h-.015;ring.scale.y=d/w;g.add(ring);
+  for(let i=0;i<4;i++){const a=i/4*PI*2+PI/4;rod(g,[Math.cos(a)*(r-.03),h-.02,Math.sin(a)*(r-.03)*d/w],[Math.cos(a)*(r-.04),0,Math.sin(a)*(r-.04)*d/w],.008,.008,G_,8)}
+  if(it.hylle!==0){const hy=cyl(g,r*.82,r*.82,.012,it.hylle==='glass'?GLASS2:Mm,0,.24,0);hy.scale.z=d/w;const r2=new THREE.Mesh(new THREE.TorusGeometry(r*.82,.006,6,64),G_);r2.rotation.x=PI/2;r2.position.y=.236;r2.scale.y=d/w;g.add(r2)}},
+ speil_ramme(g,w,d,h,M,it){const R_=mat(it.color||CAT.speil_ramme.col,{metalness:it.color&&!/^#c8|^#b|^#d/.test(it.color)?.1:.8,roughness:.3});
+  if(it.form==='organisk'){const sh=new THREE.Shape(),N=64;for(let i=0;i<=N;i++){const a=i/N*PI*2,k=1+.07*Math.sin(a*2+.6)+.05*Math.cos(a*3+1.1);const x=Math.cos(a)*w/2*k*.93,y=Math.sin(a)*h/2*k*.93;i?sh.lineTo(x,y):sh.moveTo(x,y)}
+   msh(g,new THREE.ShapeGeometry(sh),MIRROR,0,0,.02);if(it.led){const gm=msh(g,new THREE.ShapeGeometry(sh),mat('#fff3df',{emissive:'#fff0d8',emissiveIntensity:1.4}),0,0,.006);gm.scale.set(1.06,1.06,1)}return}
+  const f=it.bred||.04;bx(g,w-2*f+.004,h-2*f+.004,.006,MIRROR,0,0,.012);bx(g,w,f,d,R_,0,h/2-f/2,d/2);bx(g,w,f,d,R_,0,-h/2+f/2,d/2);bx(g,f,h-2*f,d,R_,-w/2+f/2,0,d/2);bx(g,f,h-2*f,d,R_,w/2-f/2,0,d/2)},
+});
+
+/* sort/annen armatur, firkantet regnhode, seng uten gavl, mønster på tekstiler */
+for(const t of['kjokken2','servant','veggservant','servantskap','dusjsett','dusj','dusjvegg','badekar','hjornebadekar','soyleservant','servant_oval','dusj_buet']){const ob=B[t];if(!ob)continue;
+ B[t]=function(g,w,d,h,M,it){ob(g,w,d,h,M,it);if(!it||!it.armatur)return;const A=v84Arm(it.armatur);g.traverse(o=>{if(!o.isMesh||Array.isArray(o.material))return;const m=o.material;if(m===CHROME||(m.metalness>=.85&&m.color&&m.color.getHexString()==='cfd2d6'))o.material=A})}}
+{const ob=B.dusjsett;B.dusjsett=function(g,w,d,h,M,it){ob(g,w,d,h,M,it);if(!it||!it.firkant)return;let hd=null;g.traverse(o=>{const p=o.isMesh&&o.geometry.parameters;if(p&&o.geometry.type==='CylinderGeometry'&&p.radiusTop===.11)hd=o});
+ if(hd){const s=it.firkant>.1?it.firkant:.25;bx(g,s,.012,s,hd.material,hd.position.x,hd.position.y,hd.position.z);hd.parent.remove(hd)}}}
+for(const bt of['dobbeltseng','enkeltseng','seng_ramme','kontinental']){const ob=B[bt];if(!ob)continue;
+ B[bt]=function(g,w,d,h,M,it){ob(g,w,d,h,M,it);if(!it||it.gavl!==0)return;const ut=[],v=new THREE.Vector3();
+  g.traverse(o=>{if(!o.isMesh)return;o.geometry.computeBoundingBox();o.geometry.boundingBox.getSize(v);if(v.z<=.12&&v.y>=.35&&o.position.z<-d/2+.16)ut.push(o)});for(const o of ut)o.parent&&o.parent.remove(o)}}
+for(const t of['teppe','puff','pall']){const ob=B[t];if(!ob)continue;
+ B[t]=function(g,w,d,h,M,it){ob(g,w,d,h,M,it);if(!it||!it.monster)return;const Mm=v84Monster(it.monster,it.mcol);
+  g.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.parameters;if(t==='teppe'){if(p&&p.width===w&&p.depth===d)o.material=Mm}else o.material=Mm})}}
 /* ================= Deling, besøkstall, målejustering, møbleringsforslag, personvern ================= */
 const ART_URL='https://claude.ai/artifact/DD8PCcqUJZgJbzMK3LGxBs';
 const HJEM=[];
@@ -3352,7 +3501,7 @@ function applyNight(){const md=moodOf();const n=md==='kveld';S.night=n;
  if(st){// ekte solbane for adressen; modellens retning: az (fra nord) + rot -> modellvinkel
   const sp=solarPos(S.sunDate||visDato(),tm,st.lat,st.lon);up=sp.el>.005;sunElev=Math.max(.02,sp.el);sunAz=st.proper?sp.az-st.rot-PI/2:PI/2-(sp.az+st.rot)}
  else{const ph=clamp((tm-6)/12,0,1)*PI;sunAz=ph;sunElev=Math.max(.06,Math.sin(ph)*.72)}const low=1-Math.min(1,sunElev/.6);
- if(st)P.gr=st.style==='villa'||st.style==='park'?'#86c457':'#9a968e';if(scene.fog)scene.fog.color.set(n?'#0b0f18':md==='ettermiddag'?'#e3d2bf':'#cde6f8');
+ if(st)P.gr=st.style==='villa'||st.style==='park'?'#86c457':'#9a968e';if(scene.fog&&!scene.fog._u)scene.fog.color.set(n?'#0b0f18':md==='ettermiddag'?'#e3d2bf':'#cde6f8');
  fitSun();sun.color.set(P.sun).lerp(new THREE.Color('#ffb36b'),low*.6);sun.intensity=up?P.si*(.55+.45*Math.min(1,sunElev/.35)):0;hemi.color.set(P.hc);hemi.groundColor.set(P.hg);hemi.intensity=P.hi;CEIL.emissiveIntensity=P.ceil;CEIL.emissive.set(md==='ettermiddag'?'#fff0dc':'#fffaf2');
  sunDisc.visible=!n&&up;sunDisc.material.color.set('#ffffff').lerp(new THREE.Color('#ffa860'),low*.7);moonDisc.visible=n;moon.intensity=n?.5:0;moon.castShadow=n&&Q!=='lav';
  if(HDR&&!n){const H_=HDR[md==='ettermiddag'?'eve':'day']||HDR.day;if(H_){P.env=H_.env}}if(!n)P.sky=SKY.day;// lyseblå himmel både dag og ettermiddag (HDR-bildet gir fortsatt lyset)
@@ -3861,7 +4010,7 @@ function ptBuild(){if(PT.busy)return;PT.busy=true;const tmpG=[];
  try{const src=[];const keep=o=>visibleChain(o)&&!o.userData.contact;
   // three-mesh-bvh krever at enten all geometri har indeks eller ingen – gi de uten (trær, gater, takflater) en enkel indeks
   const ensureIndex=g=>{if(g.index)return;const n=g.attributes.position.count,ix=new (n>65535?Uint32Array:Uint16Array)(n);for(let i=0;i<n;i++)ix[i]=i;g.setIndex(new THREE.BufferAttribute(ix,1))};
-  const place=(m,o)=>{if(o.userData.ptMat)m.material=o.userData.ptMat;if(o.userData.siteMesh&&siteMats&&o.material===siteMats.grass){const g=m.geometry.clone();tmpG.push(g);const P=g.attributes.position;for(let i=0;i<P.count;i++)if(houseUnder(P.getX(i),P.getZ(i)))P.setY(i,-30);m.geometry=g}ensureIndex(m.geometry);m.matrixAutoUpdate=false;m.matrix.copy(o.matrixWorld);m.matrixWorld.copy(o.matrixWorld);src.push(m)};
+  const place=(m,o)=>{if(o.userData.ptMat)m.material=o.userData.ptMat;if(o.userData.siteMesh&&siteMats&&(o.material===siteMats.grass||o.material===siteMats.hard)){const g=m.geometry.clone();tmpG.push(g);const P=g.attributes.position;for(let i=0;i<P.count;i++)if(houseUnder(P.getX(i),P.getZ(i)))P.setY(i,-30);m.geometry=g}ensureIndex(m.geometry);m.matrixAutoUpdate=false;m.matrix.copy(o.matrixWorld);m.matrixWorld.copy(o.matrixWorld);src.push(m)};
   // path traceren (three-mesh-bvh) gir hver mesh ett materialnummer, men pakker ut material-arrays – da forskyves alle
   // påfølgende meshes til feil materiale. Del derfor meshes med flere materialer opp i én mesh per gruppe.
   const pushMesh=o=>{if(!Array.isArray(o.material))return place(new THREE.Mesh(o.geometry,o.material),o);
@@ -3927,6 +4076,9 @@ const LOOP_=(t)=>{const now=performance.now();const dt=Math.min(.05,(now-lastT)/
   if(a>.042&&prCur>.6){prCur=Math.max(.6,prCur-.15);renderer.setPixelRatio(prCur);size3()}else if(a<.02&&prCur<base){prCur=Math.min(base,prCur+.1);renderer.setPixelRatio(prCur);size3()}perfAcc=perfN=0}}
  lastRendered=true;
  if(perfOn){renderer.info.autoReset=false;renderer.info.reset()}else renderer.info.autoReset=true;
+ // utsikt i gange-modus: lyst og diset fra ca. 12 m, som et lyst vindu på et annonsebilde. Nabolaget fra kartet har generiske
+ // fasader, og meglerne ville heller ha nøytral enn feil utsikt (meglertest runde 6, 15.11.2026). S.utsikt==='kart' slår det av.
+ {const f_=scene.fog;if(f_&&f_._o){const w_=mode3==='walk'&&S.utsikt!=='kart';if(w_!==!!f_._u){f_._u=w_;if(w_){f_._c=f_.color.getHex();f_.near=12;f_.far=48;f_.color.set('#eef1f3')}else{f_.near=f_._o[0];f_.far=f_._o[1];if(f_._c!=null)f_.color.setHex(f_._c)}}}}
  const k=getComposer(c);if(k)k.render(dt);else renderer.render(scene,c);if(perfOn)perfTick(now)};
 let loopErr=0;renderer.setAnimationLoop(window.__loopFn=t=>{try{if(renderer.getRenderTarget())renderer.setRenderTarget(null);LOOP_(t)}catch(e){if(loopErr++<5)console.error('3D-feil fanget:',e);try{renderer.setRenderTarget(null)}catch(_){}needRender=true}});
 const PF={n:0,t:performance.now()};function perfTick(now){PF.n++;if(now-PF.t<500)return;const fps=PF.n*1000/(now-PF.t),i=renderer.info.render;PF.n=0;PF.t=now;
