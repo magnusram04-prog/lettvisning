@@ -4096,7 +4096,7 @@ const LOOP_=(t)=>{const now=performance.now();const dt=Math.min(.05,(now-lastT)/
  if(perfOn){renderer.info.autoReset=false;renderer.info.reset()}else renderer.info.autoReset=true;
  // utsikt i gange-modus: lyst og diset fra ca. 12 m, som et lyst vindu på et annonsebilde. Nabolaget fra kartet har generiske
  // fasader, og meglerne ville heller ha nøytral enn feil utsikt (meglertest runde 6, 15.11.2026). S.utsikt==='kart' slår det av.
- {const f_=scene.fog;if(f_&&f_._o){const w_=mode3==='walk'&&S.utsikt!=='kart';if(w_!==!!f_._u){f_._u=w_;if(w_){f_._c=f_.color.getHex();f_.near=12;f_.far=48;f_.color.set('#eef1f3')}else{f_.near=f_._o[0];f_.far=f_._o[1];if(f_._c!=null)f_.color.setHex(f_._c)}}}}
+ {const f_=scene.fog;if(f_&&f_._o){const w_=mode3==='walk'&&S.utsikt!=='kart';if(w_!==!!f_._u){f_._u=w_;if(w_){f_._c=f_.color.getHex();f_.near=45;f_.far=260;f_.color.set('#e8eef2')/* v85d: tåka fra 12 m skjulte den nye utsikten (brukeren 15.11.2026); nå er naboene klare og bare det fjerne diset */}else{f_.near=f_._o[0];f_.far=f_._o[1];if(f_._c!=null)f_.color.setHex(f_._c)}}}}
  const k=getComposer(c);if(k)k.render(dt);else renderer.render(scene,c);if(perfOn)perfTick(now)};
 let loopErr=0;renderer.setAnimationLoop(window.__loopFn=t=>{try{if(renderer.getRenderTarget())renderer.setRenderTarget(null);LOOP_(t)}catch(e){if(loopErr++<5)console.error('3D-feil fanget:',e);try{renderer.setRenderTarget(null)}catch(_){}needRender=true}});
 const PF={n:0,t:performance.now()};function perfTick(now){PF.n++;if(now-PF.t<500)return;const fps=PF.n*1000/(now-PF.t),i=renderer.info.render;PF.n=0;PF.t=now;
