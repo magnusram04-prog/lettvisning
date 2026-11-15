@@ -3099,7 +3099,7 @@ async function pubStatistikk(el){const K='lettvisning-statnokkel';let key='';try
   <table class="st"><tr><th>Bolig</th><th class="n">Besøk</th><th class="n">Snitt tid</th><th class="n">Ba om visning</th></tr>${rows||'<tr><td colspan="4">Ingen besøk ennå</td></tr>'}</table>
   <p style="font-size:12px;margin-top:6px"><a href="#" id="psx">Bytt nøkkel</a></p>`;el.querySelector('#psx').onclick=e=>{e.preventDefault();try{localStorage.removeItem(K)}catch(_){}pubStatistikk(el)}}
 function pubForside(){if($('#forside'))return;const d=document.createElement('div');d.id='forside';
- d.innerHTML=`<div class="fs-in"><header class="fs-top"><span class="fs-logo"><svg viewBox="0 0 80 84" aria-hidden="true"><polygon points="0,62 40,40 40,0 0,22" fill="#2b3330"/><polygon points="40,40 80,62 80,22 40,0" fill="#4a5450"/><polygon points="0,62 40,40 80,62 40,84" fill="#d9632b"/><polygon points="54,47.7 66,54.3 66,39.3 54,32.7" fill="#f4f2ec"/></svg><span>Lett<b>Visning</b></span></span><a href="mailto:magnusram04@gmail.com">magnusram04@gmail.com</a></header>
+ d.innerHTML=`<div class="fs-in"><header class="fs-top"><span class="fs-logo"><svg viewBox="0 0 80 84" aria-hidden="true"><polygon points="0,62 40,40 40,0 0,22" fill="#2b3330"/><polygon points="40,40 80,62 80,22 40,0" fill="#4a5450"/><polygon points="0,62 40,40 80,62 40,84" fill="#d9632b"/><polygon points="54,47.7 66,54.3 66,39.3 54,32.7" fill="#f4f2ec"/></svg><span>Lett<b>Visning</b></span></span><a href="mailto:magnus@lettmateriell.no">magnus@lettmateriell.no</a></header>
  <section class="fs-hero"><div><h1>Gå rundt i boligen før du drar på visning.</h1>
  <p class="fs-ingress">LettVisning bygger boliger som er til salgs i 3D, ut fra plantegningen og bildene i annonsen. Kjøperen går fra rom til rom i nettleseren, på mobil eller PC, uten å laste ned noe.</p></div>
  <svg class="fs-plan" viewBox="0 0 260 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="square"><path d="M10 10H150V100M150 130V190H10V10M150 10H250V120H150M10 110H60M90 110H150M200 120V190H150"/></g>
@@ -3111,7 +3111,7 @@ function pubForside(){if($('#forside'))return;const d=document.createElement('di
  <li><b>Bildene blir innredning.</b> Møbler, lamper, fliser og kjøkken legges inn bilde for bilde. Det som ikke står på bildene, kommer ikke med.</li>
  <li><b>Boligen får riktig lys.</b> Huset plasseres på kartet med riktig himmelretning og nabobygg, og dagslyset regnes ut på forhånd, så det ser likt ut på alle telefoner.</li></ol></section>
  <section class="fs-megler"><h2>For meglere</h2><p>Visningen er gratis for de første boligene. Hver bolig har sin egen lenke som du kan legge i annonsen eller sende til interessenter. Boligene vises ikke i noen oversikt her.</p>
- <p>Vil du ha en visning av neste bolig du legger ut? Send lenken til annonsen på e-post: <a href="mailto:magnusram04@gmail.com?subject=3D-visning">magnusram04@gmail.com</a></p></section>
+ <p>Vil du ha en visning av neste bolig du legger ut? Send lenken til annonsen på e-post: <a href="mailto:magnus@lettmateriell.no?subject=3D-visning">magnus@lettmateriell.no</a></p></section>
  <footer class="fs-bunn"><span>Mål og møbler er omtrentlige, laget ut fra annonsen.</span><a href="#" id="fsPv">Personvern</a></footer></div>`;
  document.body.appendChild(d);d.querySelector('#fsPv').onclick=e=>{e.preventDefault();document.body.appendChild($('#modal'));personvern()}}
 
