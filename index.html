@@ -272,7 +272,7 @@ const dims=it=>{const d=CAT[it.type];return{w:it.w??d.w,d:it.d??d.d,h:it.h??d.h}
 const LS='lettvisning-v1';
 try{for(const[g,n]of[['oppussing-vr-v1',LS],['ovr-megler','lettvisning-megler'],['ovr-statnokkel','lettvisning-statnokkel']])for(const k of Object.keys(localStorage))if(k.startsWith(g)){const nk=n+k.slice(g.length);if(localStorage.getItem(nk)===null)localStorage.setItem(nk,localStorage.getItem(k));localStorage.removeItem(k)}}catch(e){}
 try{indexedDB.deleteDatabase('oppussing-vr-v1-lys')}catch(e){}// gammelt lyslager; lyset hentes på nytt
-const APP_VER='v84',APP_DATE='15.11.2026';let APP_NEW=false;
+const APP_VER='v85',APP_DATE='15.11.2026';let APP_NEW=false;
 try{if(localStorage.getItem(LS+'-ver')!==APP_VER){APP_NEW=true;localStorage.removeItem(LS+'-gi');try{indexedDB.deleteDatabase(LS+'-lys')}catch(e){}localStorage.setItem(LS+'-ver',APP_VER)}}catch(e){}
 let S, undoStack=[], ver=0, sel=null, armed=null, moveMode=false, warnedBg=false;
 let measA=null,sunAnim=false,perfOn=(()=>{try{return!!localStorage.getItem(LS+'-perf')}catch(e){return false}})();
@@ -870,7 +870,7 @@ function buildSite(st){
   siteMats.hard=houseMasked(new THREE.MeshStandardMaterial({color:'#aaa69f',roughness:.95,emissive:'#3d3a35',map:(()=>{const t=new THREE.CanvasTexture(noiseCanvas(256,175,235));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(40,40);t.colorSpace=THREE.SRGBColorSpace;return t})()}));
   siteMats.water=new THREE.MeshStandardMaterial({color:'#3a6a84',roughness:.12,metalness:.05});
   siteMats.trunk=new THREE.MeshStandardMaterial({color:'#5a4434',roughness:1});siteMats.leaf=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.95})}
- const M=siteMats,villa=st.style==='villa',y0=-st.floorY,b=bbox(),pad=st.pad||.7,bx0=b.x0-pad,bx1=b.x1+pad,bz0=b.z0-pad,bz1=b.z1+pad,TY=terrainFn(st);
+ const M=siteMats,villa=(S.stil||st.style)==='villa'/* S.stil (meta.stil i innredningsfila): 'villa' tegner nabobygg som villaer med saltak, runde 9 */,y0=-st.floorY,b=bbox(),pad=st.pad||.7,bx0=b.x0-pad,bx1=b.x1+pad,bz0=b.z0-pad,bz1=b.z1+pad,TY=terrainFn(st);
  const prism=(p,ya,yb)=>{const g=new THREE.ExtrudeGeometry(new THREE.Shape(p.map(([x,z])=>new THREE.Vector2(x,-z))),{depth:yb-ya,bevelEnabled:false});g.rotateX(-PI/2);g.translate(0,ya,0);return g};
  const add=(g,m)=>{const me=new THREE.Mesh(g,m);me.castShadow=me.receiveShadow=true;me.userData.siteMesh=1;facades.add(me);return me};
  const hash=p=>Math.abs(Math.round(p[0][0]*7+p[0][1]*13))%997;
@@ -933,7 +933,7 @@ function buildSite(st){
   const hit=(x,z)=>st.blds.some(o=>{const p=o.p;let mnx=1e9,mxx=-1e9,mnz=1e9,mxz=-1e9;p.forEach(q=>{mnx=Math.min(mnx,q[0]);mxx=Math.max(mxx,q[0]);mnz=Math.min(mnz,q[1]);mxz=Math.max(mxz,q[1])});return x>mnx-3&&x<mxx+3&&z>mnz-3&&z<mxz+3})
    ||st.roads.some(r=>r.p.some((a,i)=>{const c=r.p[i+1];if(!c)return false;const dx=c[0]-a[0],dz=c[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)<r.w/2+1.5}))
    ||(x>b.x0-8&&x<b.x1+8&&z>b.z0-8&&z<b.z1+8);
-  const cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,trees=[];for(let k=0;k<2600&&trees.length<520;k++){const a=rnd()*PI*2,r=12+Math.sqrt(rnd())*260,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+  const cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2,trees=[];for(let k=0;k<2600&&trees.length<520;k++){const a=rnd()*PI*2,r=(S.traerFra||12)+Math.sqrt(rnd())*260,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
    const y=TY(x,z);if(T&&y<-T.base+y0+1.5)continue;if(hit(x,z))continue;trees.push([x,y,z,4+rnd()*9,rnd()<.4])}
   const tg=new THREE.CylinderGeometry(.12,.18,1,6);tg.translate(0,.5,0);
   const cg=mergeGeometries([0,1,2].map(i=>{const c_=new THREE.ConeGeometry(.5-i*.12,.5,9);c_.translate(0,.25+i*.27,0);return c_.toNonIndexed()}));cg.computeVertexNormals();
@@ -1124,7 +1124,7 @@ function rebuild_(){
   const fg=new THREE.ShapeGeometry(sh);if(rm.floorRot??S.floorRot){const uv=fg.attributes.uv;for(let i=0;i<uv.count;i++){const u=uv.getX(i);uv.setXY(i,uv.getY(i),u)}}const f=new THREE.Mesh(fg,(rm.floorTex?utsnittMat(rm.floorTex,1/(rm.floorTexM||.6),1/(rm.floorTexM||.6),0,0,rm.floorRough??.45):getFloorTex(rm.floor||'eik')));f.rotation.x=-PI/2;f.position.y=.001;f.userData={room:rm.id};f.receiveShadow=true;buildG.add(f);
   if(rm.tak&&rm.tak.h>Hh+.05){saltak(rm,Hh);continue}
   const sh2=new THREE.Shape(rm.pts.map(p=>new THREE.Vector2(p[0],p[1])));(SH.ceil[LVo.i]||[]).forEach(q=>{if(q.some(p=>inPoly(p[0],p[1],rm.pts)))sh2.holes.push(new THREE.Path(q.map(p=>new THREE.Vector2(p[0],p[1]))))});
-  const c=new THREE.Mesh(new THREE.ShapeGeometry(sh2),rm.ceilWood?ceilWoodMat(rm.ceilWood):CEIL);c.rotation.x=PI/2;c.position.y=Hh;c.userData={ceil:1};c.castShadow=c.receiveShadow=true;ceilG.add(c)}
+  const c=new THREE.Mesh(new THREE.ShapeGeometry(sh2),rm.ceilWood?ceilWoodMat(rm.ceilWood):rm.ceilColor?mat(rm.ceilColor,{roughness:.92}):CEIL);c.rotation.x=PI/2;c.position.y=Hh;c.userData={ceil:1};c.castShadow=c.receiveShadow=true;ceilG.add(c)}
  ceilG.visible=mode3==='walk';CEILS.push(ceilG);
  {const nL=levelList()[LVo.i+1];if(nL){const gap=nL.y-LVo.y;if(gap-Hh>.01)for(const q of(SH.ceil[LVo.i]||[]))for(let k=0;k<q.length;k++){const a=q[k],b=q[(k+1)%q.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<.02)continue;
    const m=new THREE.Mesh(new THREE.BoxGeometry(len,gap-Hh+.004,.014),CEIL);m.position.set((a[0]+b[0])/2,(Hh+gap)/2,(a[1]+b[1])/2);m.rotation.y=Math.atan2(-(b[1]-a[1]),b[0]-a[0]);m.receiveShadow=true;buildG.add(m)}}}
@@ -1489,7 +1489,7 @@ const B={
  kjokkenbenk(g,w,d,h,M,it){const st=mat('#b9bcc0',{metalness:.85,roughness:.25});bx(g,w-.02,.1,d-.08,mat('#2a2a2a'),0,.05,-.04);bx(g,w,h-.14,d-.04,M,0,.1+(h-.14)/2,-.02);bx(g,w,.035,d+.01,mat(it&&it.top||'#5a5048',{roughness:.45}),0,h-.0175,.005);
   if(it&&it.skuff){for(let i=1;i<3;i++)bx(g,w-.01,.004,.004,mat('#222'),0,.1+(h-.14)*i/3,d/2-.018);for(let i=0;i<3;i++)bx(g,Math.min(.2,w*.5),.012,.02,st,0,.1+(h-.14)*(i+.82)/3,d/2-.005);return}
   const n=Math.max(1,Math.round(w/.6));for(let i=1;i<n;i++)bx(g,.004,h-.16,.004,mat('#222'),-w/2+i*w/n,.1+(h-.14)/2,d/2-.02);for(let i=0;i<n;i++)bx(g,.012,.16,.02,st,-w/2+(i+.5)*w/n+(w/n/2-.05),h-.25,d/2-.005)},
- kjokkenvask(g,w,d,h,M,it){B.kjokkenbenk(g,w,d,h,M,it);bx(g,Math.min(.5,w-.2),.012,.4,mat('#9da1a6',{metalness:.7,roughness:.3}),0,h+.001,0);bx(g,Math.min(.44,w-.26),.013,.34,mat('#6f7378',{metalness:.7,roughness:.3}),0,h+.002,0);
+ kjokkenvask(g,w,d,h,M,it){B.kjokkenbenk(g,w,d,h,M,it);bx(g,Math.min(.5,w-.2),.012,.4,(it&&it.vask?mat(it.vask,{roughness:.35}):mat('#9da1a6',{metalness:.7,roughness:.3})),0,h+.001,0);bx(g,Math.min(.44,w-.26),.013,.34,(it&&it.vask?mat(it.vask,{roughness:.4}):mat('#6f7378',{metalness:.7,roughness:.3}))/* v85: vask = farge på kummen */,0,h+.002,0);
   cyl(g,.015,.015,.28,mat('#cfd2d6',{metalness:.9,roughness:.2}),0,h+.14,-d/2+.08);bx(g,.025,.025,.2,mat('#cfd2d6',{metalness:.9,roughness:.2}),0,h+.27,-d/2+.17)},
  komfyr(g,w,d,h,M){bx(g,w,h-.04,d,M,0,(h-.04)/2,0);bx(g,w,.04,d,mat('#151515',{roughness:.2}),0,h-.02,0);for(const sx of[-1,1])for(const sz of[-1,1])cyl(g,.08,.08,.003,mat('#333'),sx*w/4.5,h+.001,sz*d/4.5);
   bx(g,w-.08,h*.45,.01,mat('#1d1d1d',{roughness:.15}),0,h*.4,d/2+.003);bx(g,w-.12,.02,.03,mat('#ccc',{metalness:.8}),0,h*.68,d/2+.02)},
@@ -1540,9 +1540,9 @@ const B={
  termostat(g,w,d,h,M){rbx(g,w,h,.022,M,0,0,.011,.005);bx(g,.045,.028,.003,mat('#a9b8ad',{emissive:'#334438',emissiveIntensity:.4}),0,.025,.023)},
  sikringsskap(g,w,d,h,M){rbx(g,w,h,d,M,0,0,d/2,.01);bx(g,.02,.03,.005,mat('#bbb'),w/2-.04,0,d+.002)},
  veggwc(g,w,d,h,M){rbx(g,w,.3,d,M,0,.36,0,.13);rbx(g,w-.02,.025,d-.06,M,0,.525,.02,.1);bx(g,w*.8,.22,.12,M,0,.33,-d/2+.06);bx(g,.24,.16,.012,mat('#ffffff',{roughness:.15}),0,1.02,-d/2+.006);bx(g,.1,.12,.004,mat('#e6e6e6'),-.055,1.02,-d/2+.013);bx(g,.1,.12,.004,mat('#e6e6e6'),.055,1.02,-d/2+.013)},
- buesofa(g,w,d,h,M){const a=w/2-.06,b=d/2-.06;softSlab(g,squircle(a,b,3.2),.04,.34,.06,M);
+ buesofa(g,w,d,h,M,it){const a=w/2-.06,b=d/2-.06;softSlab(g,squircle(a,b,3.2),.04,.34,.06,M);
   softSlab(g,bandPts(a,b,.26,3.2,-.08,PI+.08),.34,h-.34,.07,M);softSlab(g,squircle(a-.24,b-.22,3.6).map(p=>new THREE.Vector2(p.x,p.y-.05)),.35,.13,.055,M);
-  const L=mat('#2a2622',{roughness:.5});for(const sx of[-1,1])for(const sz of[-1,1])cyl(g,.02,.02,.04,L,sx*(w/2-.25),.02,sz*(d/2-.2));const P=matFor('velvet','#5b2537');for(const sd of[-1,1]){const c=rbx(g,.46,.4,.12,P,sd*.32,.62,-d/2+.36,.06);c.rotation.set(-.3,-sd*.12,sd*.05)}},
+  const L=mat('#2a2622',{roughness:.5});for(const sx of[-1,1])for(const sz of[-1,1])cyl(g,.02,.02,.04,L,sx*(w/2-.25),.02,sz*(d/2-.2));const P=matFor('velvet',(it&&it.putec)||'#5b2537')/* v85: putec = putefarge */;for(const sd of[-1,1]){const c=rbx(g,.46,.4,.12,P,sd*.32,.62,-d/2+.36,.06);c.rotation.set(-.3,-sd*.12,sd*.05)}},
  loungestol(g,w,d,h,M){const a=w/2-.05,b=d/2-.05;softSlab(g,squircle(a,b,2.8),.02,.4,.07,M);softSlab(g,bandPts(a,b,.2,2.8,-.25,PI+.25),.38,h-.38,.07,M);
   const P=mat('#e0d6c8',{roughness:.95,bumpMap:NOISE,bumpScale:.5});rbx(g,.4,.34,.12,P,0,.6,-d/2+.3,.06).rotation.x=-.25},
  sofabord_rund(g,w,d,h,M){cyl(g,w/2,w/2,.035,M,0,h-.0175,0);const r=w*.33,n=20;cyl(g,r-.01,r-.01,h-.04,M,0,(h-.04)/2,0);for(let i=0;i<n;i++){const a=i/n*PI*2;cyl(g,.022,.022,h-.04,M,Math.cos(a)*r,(h-.04)/2,Math.sin(a)*r)}},
@@ -1564,9 +1564,9 @@ const B={
  spisebord_rund(g,w,d,h,M){cyl(g,w/2,w/2,.025,M,0,h-.0125,0);cyl(g,.035,.035,h-.12,M,0,.06+(h-.12)/2,0);for(let i=0;i<4;i++){const a=i*PI/2+PI/4;const L=bx(g,.035,.035,w*.42,M,Math.sin(a)*w*.19,.06+.0,Math.cos(a)*w*.19);L.rotation.y=a;L.rotation.x=-.12}cyl(g,.06,.06,.05,M,0,h-.06,0)},
  stol_boucle(g,w,d,h,M){const L=mat('#161616',{roughness:.4,metalness:.5});for(const sx of[-1,1])for(const sz of[-1,1]){const l=cyl(g,.009,.009,.47,L,sx*(w/2-.05),.235,sz*(d/2-.06));l.rotation.z=sx*.05}
   rbx(g,w,.07,d-.08,M,0,.48,.02,.03);for(const sx of[-1,1])cyl(g,.008,.008,.32,L,sx*(w/2-.06),.64,-d/2+.06);const bk=rbx(g,w*.98,.2,.05,M,0,.74,-d/2+.05,.022);bk.rotation.x=.1},
- hoyskap(g,w,d,h,M,it){it=it||{};/* ovn:1 = innebygd stekeovn, mikro:1 = mikro over (meglertest 15.11.2026) */if(it.ovn||it.mikro){const Gl=mat('#141414',{roughness:.12,metalness:.3}),St=mat('#b9bcc0',{metalness:.85,roughness:.25});if(it.ovn){bx(g,w-.04,.6,.012,Gl,0,1.15,d/2+.006);bx(g,w-.04,.07,.014,mat('#2a2a2a'),0,1.49,d/2+.007);bx(g,w-.16,.014,.03,St,0,1.4,d/2+.025);bx(g,.06,.02,.004,mat('#ff9a3a',{emissive:'#ff8a2a',emissiveIntensity:.6}),w/4,1.49,d/2+.015)}if(it.mikro){bx(g,w-.04,.38,.012,Gl,0,1.75,d/2+.006);bx(g,.1,.3,.014,mat('#2a2a2a'),w/2-.08,1.75,d/2+.007)}}bx(g,w,.08,d-.06,mat('#222'),0,.04,-.03);bx(g,w,h-.08,d,M,0,.08+(h-.08)/2,0);const st=mat('#b9bcc0',{metalness:.85,roughness:.25});bx(g,w-.01,.004,.004,mat('#222'),0,1.0,d/2+.001);bx(g,w-.01,.004,.004,mat('#222'),0,1.95,d/2+.001);
-  if(!it.ovn){bx(g,.012,.25,.02,st,w/2-.05,.8,d/2+.01);bx(g,.012,.25,.02,st,w/2-.05,1.2,d/2+.01)}else bx(g,.012,.2,.02,st,w/2-.05,.65,d/2+.01);if(!it.mikro)bx(g,.012,.15,.02,st,w/2-.05,2.05,d/2+.01);for(let i=0;i<6;i++)bx(g,w-.1,.004,.006,mat('#333'),0,.1+i*.012,d/2+.002)},
- ventilator(g,w,d,h,M){const can=new THREE.Mesh(new THREE.CylinderGeometry(w/2,w/2,h*.42,40,1,false,-PI/2,PI),M);can.position.set(0,-h/2+h*.21,0);g.add(can);const bot=new THREE.Mesh(new THREE.CircleGeometry(w/2,40,0,PI),mat('#777',{metalness:.7,roughness:.4}));bot.rotation.set(PI/2,0,-PI/2);bot.position.y=-h/2+.002;g.add(bot);bx(g,.26,h*.58,.22,M,0,h*.21,.11)},
+ hoyskap(g,w,d,h,M,it){it=it||{};/* ovn:1 = innebygd stekeovn, mikro:1 = mikro over (meglertest 15.11.2026) */if(it.ovn||it.mikro){const Gl=mat('#141414',{roughness:.12,metalness:.3}),St=mat('#b9bcc0',{metalness:.85,roughness:.25});if(it.ovn){bx(g,w-.04,.6,.012,Gl,0,1.15,d/2+.006);bx(g,w-.04,.07,.014,mat('#2a2a2a'),0,1.49,d/2+.007);bx(g,w-.16,.014,.03,St,0,1.4,d/2+.025);bx(g,.06,.02,.004,mat('#ff9a3a',{emissive:'#ff8a2a',emissiveIntensity:.6}),w/4,1.49,d/2+.015)}if(it.mikro){bx(g,w-.04,.38,.012,Gl,0,1.75,d/2+.006);bx(g,.1,.3,.014,mat('#2a2a2a'),w/2-.08,1.75,d/2+.007)}}bx(g,w,.08,d-.06,mat('#222'),0,.04,-.03);bx(g,w,h-.08,d,M,0,.08+(h-.08)/2,0);const st=it.grep?mat(it.grep,{metalness:it.grepMatt?0:.6,roughness:it.grepMatt?.5:.35}):mat('#b9bcc0',{metalness:.85,roughness:.25})/* v85: grep, grepMatt, knott */;bx(g,w-.01,.004,.004,mat('#222'),0,1.0,d/2+.001);bx(g,w-.01,.004,.004,mat('#222'),0,1.95,d/2+.001);
+  if(!it.ovn){bx(g,it.knott?.03:.012,it.knott?.03:.25,.02,st,w/2-.05,.8,d/2+.01);bx(g,it.knott?.03:.012,it.knott?.03:.25,.02,st,w/2-.05,1.2,d/2+.01)}else bx(g,it.knott?.03:.012,it.knott?.03:.2,.02,st,w/2-.05,.65,d/2+.01);if(!it.mikro)bx(g,it.knott?.03:.012,it.knott?.03:.15,.02,st,w/2-.05,2.05,d/2+.01);for(let i=0;i<6;i++)bx(g,w-.1,.004,.006,mat('#333'),0,.1+i*.012,d/2+.002)},
+ ventilator(g,w,d,h,M,it){const can=new THREE.Mesh(new THREE.CylinderGeometry(w/2,w/2,h*.42,40,1,false,-PI/2,PI),M);can.position.set(0,-h/2+h*.21,0);g.add(can);const bot=new THREE.Mesh(new THREE.CircleGeometry(w/2,40,0,PI),(it&&it.bunn?mat(it.bunn,{roughness:.6}):mat('#777',{metalness:.7,roughness:.4})));bot.rotation.set(PI/2,0,-PI/2);bot.position.y=-h/2+.002;g.add(bot);bx(g,.26,h*.58,.22,M,0,h*.21,.11)},
  kappe(g,w,d,h,M){bx(g,w,h,d,M,0,0,d/2)},
  blomsterseng(g,w,d,h,M,it){const F=matFor('boucle','#efece6');rbx(g,w+.06,.3,d,F,0,.17,0,.06);rbx(g,w-.02,.22,d-.1,mat('#fafaf8'),0,.43,.04,.05);rbx(g,w,.07,d*.74,M,0,.565,d*.12,.035);rbx(g,w+.06,.05,.55,matFor('fab','#bdb8b1'),0,.6,d/2-.33,.02);
   rbx(g,w,.62,.14,F,0,.58,-d/2+.07,.06);for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(w/10+.02,24,16),F);p.scale.set(1,1.2,.42);p.position.set(-w/2+(i+.5)*w/5,h-.22+(i%2?0:.04),-d/2+.08);g.add(p)}
@@ -1607,7 +1607,7 @@ const HANDLE=new THREE.MeshStandardMaterial({color:'#c4c6c8',metalness:.4,roughn
 const CHROME=new THREE.MeshStandardMaterial({color:'#e8eaec',metalness:1,roughness:.08});
 const BLACKM=new THREE.MeshStandardMaterial({color:'#18181a',metalness:.6,roughness:.35});
 const CRYSTAL=new THREE.MeshPhysicalMaterial({color:'#ffffff',metalness:0,roughness:.02,transmission:1,thickness:.02,ior:1.6,transparent:true,opacity:.9,envMapIntensity:2});
-const GLASS2=new THREE.MeshPhysicalMaterial({color:'#ffffff',roughness:.03,transmission:1,thickness:.004,ior:1.5,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false});
+const GLASS2=new THREE.MeshPhysicalMaterial({color:'#ffffff',roughness:.04,clearcoat:.5,transparent:true,opacity:.07,side:THREE.DoubleSide,depthWrite:false})/* v85: før opacity .6 + transmission, bleket kunsten (meglertest runde 8) */;
 const FROST=new THREE.MeshPhysicalMaterial({color:'#f2f6f6',roughness:.45,transmission:.92,thickness:.006,ior:1.5,transparent:true,opacity:.75,side:THREE.DoubleSide,depthWrite:false});
 const MIRROR=new THREE.MeshStandardMaterial({color:'#f4f6f6',metalness:1,roughness:.015});
 const PORC=new THREE.MeshPhysicalMaterial({color:'#fbfbfa',roughness:.12,clearcoat:.6,clearcoatRoughness:.08});
@@ -1778,7 +1778,7 @@ Object.assign(B,{
   for(let i=0;i<n;i++){const fx=-w/2+fw*(i+.5);if(it.sink||it.door){bx(g,fw-.004,fh-.004,.018,F,fx,.1+fh/2,fz);bx(g,fw*.45,.012,.012,HANDLE,fx,.1+fh-.045,fz+.016)}
    else{const hs=[.2,.25,fh-.45];let y=.1;for(const hh of hs){bx(g,fw-.004,hh-.004,.018,F,fx,y+hh/2,fz);bx(g,fw*.45,.012,.012,HANDLE,fx,y+hh-.035,fz+.016);y+=hh}}}
   bx(g,w,.03,d+.01,it.top==='eik'?OAK('#cdae86'):it.top==='hvit'?mat('#f1f0ec',{roughness:.2}):TOPD,0,h-.015,.005);
-  if(it.sink){bx(g,.44,.004,.38,mat('#9a9c9e',{metalness:1,roughness:.35}),0,h+.001,0);bx(g,.4,.003,.34,mat('#a3a6a9',{metalness:.9,roughness:.38}),0,h+.003,0);
+  if(it.sink){bx(g,.44,.004,.38,it.vask?mat(it.vask,{roughness:.35}):mat('#9a9c9e',{metalness:1,roughness:.35}),0,h+.001,0);bx(g,.4,.003,.34,it.vask?mat(it.vask,{roughness:.45}):mat('#a3a6a9',{metalness:.9,roughness:.38}),0,h+.003,0);
    cyl(g,.022,.026,.05,CHROME,0,h+.025,-.22);tube(g,[[0,h+.04,-.22],[0,h+.3,-.22],[0,h+.36,-.16],[0,h+.3,-.08]],.011,CHROME,24);bx(g,.012,.07,.012,CHROME,.03,h+.07,-.22)}
   if(it.hob){rbx(g,.58,.006,.51,new THREE.MeshPhysicalMaterial({color:'#0c0c0d',roughness:.08,clearcoat:1}),0,h+.003,0,.003);for(const[x,z,r]of[[-.15,-.12,.09],[.15,-.12,.07],[-.15,.12,.07],[.15,.12,.1]]){const c=msh(g,new THREE.RingGeometry(r-.003,r,48),mat('#555'),x,h+.0065,z);c.rotation.x=-PI/2}}
   if(it.deco)fruitBowl(g,0,h,0)},
@@ -1790,8 +1790,12 @@ Object.assign(B,{
   const ge=new THREE.CylinderGeometry(Math.SQRT1_2*.28,Math.SQRT1_2*w*.98,py,4,1);ge.rotateY(PI/4);const pm=msh(g,ge,STEEL2,0,-h/2+can+py/2,d/2);pm.scale.z=(d*.98)/(w*.98);
   bx(g,.26,h-can-py,.24,STEEL2,0,-h/2+can+py+(h-can-py)/2,.12);bx(g,w-.04,.003,d-.04,mat('#6a6c6e',{metalness:1,roughness:.5}),0,-h/2-.001,d/2);
   for(const sx of[-1,1])msh(g,new THREE.CircleGeometry(.018,20),glow('#fff3df',lampOn(it),2),sx*w*.3,-h/2-.002,d*.6).rotation.x=PI/2},
- overskap2(g,w,d,h,M,it){const on=lampOn(it),F=it.color?new THREE.MeshPhysicalMaterial({color:it.color,roughness:.35,clearcoat:.2}):WHITEGL;bx(g,w,h,d-.02,mat('#ecece9'),0,0,(d-.02)/2);const n=Math.max(1,Math.round(w/.4)),fw=w/n;
-  for(let i=0;i<n;i++)bx(g,fw-.004,h-.004,.018,F,-w/2+fw*(i+.5),0,d-.009);bx(g,w-.04,.008,.02,glow('#fff1d8',on,3),0,-h/2-.004,d-.06);g.userData.lp=new THREE.Vector3(0,-h/2-.06,d-.05)},
+ overskap2(g,w,d,h,M,it){const on=lampOn(it),F=it.color?new THREE.MeshPhysicalMaterial({color:it.color,roughness:.35,clearcoat:.2}):WHITEGL;const n=Math.max(1,Math.round(w/.4)),fw=w/n,erG=i=>it.glass==='alle'||(Array.isArray(it.glass)&&it.glass.includes(i));
+  /* v85: vitrine (glass): hult skap med hyller og servise bak rammefront, ellers tett skap (meglertest runde 8, Trudvangveien) */
+  if(it.glass){const C=mat('#e9e7e2'),dd=d-.02;bx(g,w,h,.02,C,0,0,.01);bx(g,w,.02,dd,C,0,h/2-.01,dd/2);bx(g,w,.02,dd,C,0,-h/2+.01,dd/2);bx(g,.02,h,dd,C,-w/2+.01,0,dd/2);bx(g,.02,h,dd,C,w/2-.01,0,dd/2);for(let i=1;i<n;i++)bx(g,.016,h-.04,dd,C,-w/2+i*fw,0,dd/2);
+   const P=mat('#fbfaf7',{roughness:.3});for(const sy of[-h/6,h/6]){bx(g,w-.04,.014,dd-.03,C,0,sy,dd/2);for(let i=0;i<n;i++){if(!erG(i))continue;const x0=-w/2+fw*i;for(let k=0;k<3;k++)cyl(g,.035,.03,.09,P,x0+fw*(.25+k*.25),sy+.052,dd*.5)}}}
+  else bx(g,w,h,d-.02,mat('#ecece9'),0,0,(d-.02)/2);
+  for(let i=0;i<n;i++){const x=-w/2+fw*(i+.5);if(it.glass&&erG(i)){const r=.045;bx(g,fw-.004,r,.018,F,x,h/2-r/2,d-.009);bx(g,fw-.004,r,.018,F,x,-h/2+r/2,d-.009);bx(g,r,h-.004,.018,F,x-fw/2+r/2,0,d-.009);bx(g,r,h-.004,.018,F,x+fw/2-r/2,0,d-.009);bx(g,fw-2*r,h-2*r,.006,GLASS,x,0,d-.012)}else bx(g,fw-.004,h-.004,.018,F,x,0,d-.009)}bx(g,w-.04,.008,.02,glow('#fff1d8',on,3),0,-h/2-.004,d-.06);g.userData.lp=new THREE.Vector3(0,-h/2-.06,d-.05)},
  kjol2(g,w,d,h,M,it){const F=new THREE.MeshPhysicalMaterial({color:it.color||'#f7f7f5',roughness:.25,clearcoat:.4});rbx(g,w,h-.02,d-.06,mat('#e6e6e4'),0,.01+(h-.02)/2,-.03,.01);
   const hf=h*.6;rbx(g,w-.004,hf-.006,.05,F,0,h-hf/2,d/2-.04,.012);rbx(g,w-.004,h-hf-.03,.05,F,0,.02+(h-hf-.03)/2,d/2-.04,.012);bx(g,.02,.35,.03,mat('#cfd0d1',{metalness:.6,roughness:.3}),w/2-.04,h-hf-.02+.2,d/2-.002);bx(g,.02,.25,.03,mat('#cfd0d1',{metalness:.6,roughness:.3}),w/2-.04,h-hf-.18,d/2-.002)},
  dusjkabinett(g,w,d,h,M,it){const AL=mat('#d9dbdd',{metalness:.85,roughness:.28});sbx(g,w,.06,d,PORC,0,.03,0,.01);bx(g,w-.1,.004,d-.1,mat('#f0f0ee',{roughness:.3}),0,.062,0);cyl(g,.03,.03,.004,CHROME,0,.064,0);
@@ -2622,7 +2626,12 @@ Object.assign(B,{
   if(it.drop){const g2=new THREE.ExtrudeGeometry(sh,{depth:it.drop,bevelEnabled:false});g2.rotateX(PI/2);const sk=msh(g,g2,mat(it.dropc||'#8f9396',{roughness:.95}),0,0,0);sk.castShadow=sk.receiveShadow=true}
   const Wt=mat(it.railc||'#f6f6f4',{roughness:.5}),skip=new Set(it.aapen||[]);if(it.rail)for(let k=0;k<P.length;k++){if(skip.has(k))continue;const a=P[k],b=P[(k+1)%P.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<.05)continue;
    const e=new THREE.Group();e.position.set((a[0]+b[0])/2,h,(a[1]+b[1])/2);e.rotation.y=Math.atan2(-(b[1]-a[1]),b[0]-a[0]);g.add(e);
-   bx(e,L+.06,.06,.1,Wt,0,.95,0);bx(e,L,.05,.07,Wt,0,.08,0);const n=Math.max(1,Math.round(L/.11));for(let i=0;i<n;i++)bx(e,.035,.82,.035,Wt,-L/2+(i+.5)*L/n,.5,0)}},
+   bx(e,L+.06,.06,.1,Wt,0,.95,0);bx(e,L,.05,.07,Wt,0,.08,0);if(it.parapet)bx(e,L,.88,.08,mat(it.parapet,{roughness:.9}),0,.5,0)/* v85: tett brystning */;else{const n=Math.max(1,Math.round(L/.11));for(let i=0;i<n;i++)bx(e,.035,.82,.035,Wt,-L/2+(i+.5)*L/n,.5,0)}
+   // innglasset balkong (it.glass, v85): glassfelt fra rekkverket opp til taket, smale rammer per ca. 0,8 m, toppramme
+   if(it.glass){const gh=it.glassH||2.3,F=mat(it.glassRamme||it.railc||'#e8e6e0',{roughness:.5}),m=Math.max(1,Math.round(L/.8));bx(e,L,.05,.05,F,0,gh,.0);for(let i=0;i<=m;i++)bx(e,.035,gh-.98,.04,F,-L/2+i*L/m,(gh+.98)/2,0);
+    bx(e,L,gh-1.0,.008,GLASS,0,(gh+.98)/2,0)}}
+  // tak over innglasset balkong (balkongen over eller eget tak)
+  if(it.glass&&it.glassTak!==0){const gh=it.glassH||2.3,gt=new THREE.ExtrudeGeometry(sh,{depth:.12,bevelEnabled:false});gt.rotateX(PI/2);const tk=msh(g,gt,mat('#e9e7e2',{roughness:.9}),0,h+gh+.17,0);tk.castShadow=tk.receiveShadow=true}},
  utetrapp(g,w,d,h,M,it){const St=granittMat(it.color||CAT.utetrapp.col),n=Math.max(2,Math.round(h/.17)),rise=h/n,run=d/n;
   for(let i=0;i<n;i++){const y=(i+1)*rise,z=d/2-(i+.5)*run;const s=bx(g,w,y,run+.01,St,0,y/2,z);s.castShadow=s.receiveShadow=true}
   if(it.vanger)for(const sx of[-1,1])bx(g,.22,h+.12,d,St,sx*(w/2+.11),(h+.12)/2,0);
@@ -2840,7 +2849,7 @@ function v84Fronter(g,w,it,fw0){if(!it)return;const fr=[],hd=[];
  if(it.front==='profil')for(const o of fr){const p=o.geometry.parameters,P=o.parent,m=o.material,b=Math.min(.055,p.width*.12,p.height*.18),zf=o.position.z+.009+.003;
   bx(P,p.width,b,.01,m,o.position.x,o.position.y+p.height/2-b/2,zf);bx(P,p.width,b,.01,m,o.position.x,o.position.y-p.height/2+b/2,zf);
   bx(P,b,p.height-2*b,.01,m,o.position.x-p.width/2+b/2,o.position.y,zf);bx(P,b,p.height-2*b,.01,m,o.position.x+p.width/2-b/2,o.position.y,zf)}
- if(it.grep||it.knott){const GM=it.grep?new THREE.MeshStandardMaterial({color:it.grep,metalness:.6,roughness:.35}):HANDLE;
+ if(it.grep||it.knott){const GM=it.grep?new THREE.MeshStandardMaterial({color:it.grep,metalness:it.grepMatt?0:.6,roughness:it.grepMatt?.5:.35}):HANDLE;
   for(const o of hd){if(it.knott){const P=o.parent,k=cyl(P,.013,.011,.028,GM,o.position.x,o.position.y,o.position.z+(it.front==='profil'?.008:0));k.rotation.x=PI/2;P.remove(o)}else{o.material=GM;if(it.front==='profil')o.position.z+=.006}}}
  else if(it.front==='profil')for(const o of hd)o.position.z+=.006;
  if(it.topc){const TM=new THREE.MeshPhysicalMaterial({color:it.topc,roughness:.3,clearcoat:.35});g.traverse(o=>{const p=o.isMesh&&o.geometry.parameters;if(p&&o.geometry.type==='BoxGeometry'&&(p.height===.03||p.height===.04)&&Math.abs(p.width-w)<.003&&p.depth>.3)o.material=TM})}}
