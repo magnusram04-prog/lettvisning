@@ -1471,10 +1471,10 @@ const B={
  nattbord(g,w,d,h,M){rbx(g,w,h,d,M,0,h/2,0);rbx(g,w-.02,.004,.004,mat('#777'),0,h*.6,d/2);rbx(g,.1,.015,.015,mat('#888'),0,h*.78,d/2+.008)},
  kommode(g,w,d,h,M){rbx(g,w,h-.06,d,M,0,.06+(h-.06)/2,0);for(let i=1;i<4;i++){rbx(g,w-.02,.004,.004,mat('#777'),0,.06+(h-.06)*i/4,d/2);rbx(g,.12,.015,.015,mat('#888'),0,.06+(h-.06)*(i-.5)/4,d/2+.008)}rbx(g,.12,.015,.015,mat('#888'),0,.06+(h-.06)*3.5/4,d/2+.008)},
  garderobe(g,w,d,h,M){bx(g,w,h,d,M,0,h/2,0);const n=Math.max(1,Math.round(w/.5));for(let i=1;i<n;i++)bx(g,.004,h-.02,.004,mat('#888'),-w/2+i*w/n,h/2,d/2);for(let i=0;i<n;i++)bx(g,.015,.25,.015,mat('#999'),-w/2+(i+.5)*w/n+(i%2?-1:1)*(w/n/2-.06),h*.5,d/2+.01)},
- bokhylle(g,w,d,h,M){const t=.025;bx(g,t,h,d,M,-w/2+t/2,h/2,0);bx(g,t,h,d,M,w/2-t/2,h/2,0);bx(g,w,t,d,M,0,h-t/2,0);bx(g,w,.06,d,M,0,.03,0);bx(g,w,h,.01,M,0,h/2,-d/2+.005);
+ bokhylle(g,w,d,h,M,it){const t=.025,bk=it&&it.boker!==undefined?it.boker:1;/* boker: 1 = full, 0.2 = få bøker og pynt, 0 = tom (meglertest 15.11.2026) */bx(g,t,h,d,M,-w/2+t/2,h/2,0);bx(g,t,h,d,M,w/2-t/2,h/2,0);bx(g,w,t,d,M,0,h-t/2,0);bx(g,w,.06,d,M,0,.03,0);bx(g,w,h,.01,M,0,h/2,-d/2+.005);
   const n=Math.max(2,Math.round(h/.36));const cols=['#8a4b38','#3e4a5c','#c9a227','#5d7a5a','#d6a2a8','#e9e4da','#2f2f2f'];let seed=w*1000;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
   for(let i=1;i<n;i++){const y=i*h/n;bx(g,w-2*t,t,d-.01,M,0,y,0)}
-  for(let i=0;i<n-1;i++){const y0=i*h/n+(i?t/2:.06);let x=-w/2+t+.01;while(x<w/2-t-.05){const bw=.02+rnd()*.03,bh=.18+rnd()*.1;if(rnd()<.12){x+=bw+.02;continue}bx(g,bw,bh,d*.75,mat(cols[Math.floor(rnd()*cols.length)]),x+bw/2,y0+bh/2,.01);x+=bw+.003}}},
+  for(let i=0;i<n-1;i++){const y0=i*h/n+(i?t/2:.06);let x=-w/2+t+.01;if(bk<1&&bk>0){const vx=-w/2+t+.08+rnd()*(w-2*t-.16);lathe(g,[[0,0],[.045,0],[.06,.08],[.035,.17],[0,.17]],mat(['#e9e4da','#c9b8a0','#2f2f2f'][i%3],{roughness:.4}),vx,y0,0,24)}while(x<w/2-t-.05){const bw=.02+rnd()*.03,bh=.18+rnd()*.1;if(bk<=0||rnd()>bk&&bk<1){x+=w;continue}if(rnd()<.12){x+=bw+.02;continue}bx(g,bw,bh,d*.75,mat(cols[Math.floor(rnd()*cols.length)]),x+bw/2,y0+bh/2,.01);x+=bw+.003}}},
  teppe(g,w,d,h,M,it){const R_=matFor('boucle',it.color||CAT.teppe.col);bx(g,w,.012,d,R_,0,.007,0);if(!it.nofringe){const F=mat(new THREE.Color(it.color||CAT.teppe.col).offsetHSL(0,0,.05).getStyle(),{roughness:1});const n=Math.floor(w/.025);for(const sz of[-1,1])for(let i=0;i<n;i++)bx(g,.006,.004,.05,F,-w/2+(i+.5)*w/n,.003,sz*(d/2+.022))}},
  plante(g,w,d,h,M){cyl(g,w*.4,w*.32,.35,M,0,.175,0);cyl(g,w*.37,w*.37,.02,mat('#4a3b2c'),0,.34,0);const L=mat('#4f7a45'),L2=mat('#3d6638');
   cyl(g,.015,.02,h-.45,mat('#6b5640'),0,.35+(h-.45)/2,0);let sd=Math.round(w*1000+h*100);const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};
@@ -1765,6 +1765,7 @@ Object.assign(B,{
    cyl(g,.035,.035,.08,mat('#f3ede2',{roughness:.6}),w*.38,h+.04,.08);cyl(g,.035,.035,.12,mat('#f3ede2',{roughness:.6}),w*.32,h+.06,.12)}},
  rundspeil(g,w,d,h,M,it){const r=w/2;msh(g,new THREE.CircleGeometry(r-.008,64),MIRROR,0,0,.012);const t=msh(g,new THREE.TorusGeometry(r-.004,.008,10,96),mat(it.color||'#2a2a2a',{metalness:.7,roughness:.3}),0,0,.012);msh(g,new THREE.CircleGeometry(r,48),mat('#222'),0,0,.004)},
  vegghylle(g,w,d,h,M,it){const W_=mat(it.color||CAT.vegghylle.col,{roughness:.4});bx(g,w,.02,d,W_,0,-h/2+.01,d/2);bx(g,w,.04,.012,W_,0,-h/2+.03,d-.006);bx(g,w,.05,.012,W_,0,-h/2+.025,.006);
+  if(it.krukker){const G_=new THREE.MeshPhysicalMaterial({color:'#e8eef0',roughness:.08,transmission:.6,transparent:true,opacity:.55}),L_=mat('#c9a77a',{roughness:.6});const n=Math.max(3,Math.round(w/.11));for(let i=0;i<n;i++){const x=-w/2+.06+i*(w-.12)/(n-1),r=.03+((i*37)%3)*.006,ch=.08+((i*53)%4)*.03;const j=cyl(g,r,r,ch,G_,x,-h/2+.02+ch/2,d*.5);j.userData.ptSkip=1;cyl(g,r*.95,r*.95,.015,L_,x,-h/2+.02+ch+.008,d*.5)}return}
   const fr=(x,fw,fh,k,rz)=>{const f=new THREE.Group();frameArt(f,fw,fh,k,'#efe9df',.025);f.position.set(x,-h/2+.02+fh/2,.035);f.rotation.x=-.12;f.rotation.z=rz;g.add(f)};fr(-w*.18,.22,.28,3,0);fr(w*.08,.18,.24,0,0);
   cyl(g,.03,.03,.1,mat('#f3ede2',{roughness:.6}),-w*.4,-h/2+.07,.05);cyl(g,.006,.006,.12,TEAK,w*.32,-h/2+.08,.05);lathe(g,[[0,0],[.03,0],[.04,.06],[.02,.12],[.015,.13],[0,.13]],PORC,w*.32,-h/2+.02,.05,24)},
  kjokken2(g,w,d,h,M,it){const F=it.color?new THREE.MeshPhysicalMaterial({color:it.color,roughness:.35,clearcoat:.2}):WHITEGL,gap=mat('#3b3b3b');
@@ -1876,7 +1877,7 @@ Object.assign(B,{
    const s=msh(g,softBox(w+.02+t*.04,h+t*.03,d+.02+t*.04,Math.min(w,h)*.45,.02,10),m,0,h/2+t*.012,0);s.userData.noShadow=1;s.userData.ptSkip=1}},
 });
 
-{const kb=B.kjokken2;B.kjokken2=function(g,w,d,h,M,it){if(!it.hob){kb(g,w,d,h,M,it);return}kb(g,w,d,h,M,{...it,door:1});const fz=d/2-.03+.02;
+{const kb=B.kjokken2;B.kjokken2=function(g,w,d,h,M,it){if(!it.hob||it.ovn===0){kb(g,w,d,h,M,it);return}kb(g,w,d,h,M,{...it,door:1});const fz=d/2-.03+.02;
  bx(g,w-.02,.6,.012,mat('#bfc2c5',{metalness:1,roughness:.3}),0,.27+.3,fz+.002);bx(g,w-.1,.4,.004,new THREE.MeshPhysicalMaterial({color:'#0d0e10',roughness:.06,clearcoat:1}),0,.52,fz+.01);
  bx(g,w-.04,.09,.006,new THREE.MeshPhysicalMaterial({color:'#0d0e10',roughness:.06,clearcoat:1}),0,.81,fz+.01);cyl(g,.008,.008,w-.14,CHROME,0,.75,fz+.04).rotation.z=PI/2;for(const sx of[-1,1])bx(g,.012,.012,.03,CHROME,sx*(w/2-.08),.75,fz+.025)}}
 
@@ -3252,7 +3253,7 @@ function vendFritt(){const t0=performance.now(),p0=rig.position.clone();
   yaw=yawS=best;pitch=pitchS=0;needRender=true};
  setTimeout(prøv,500)}
 function visStart(){closeModal();setView('3d');document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x.dataset.v==='3d'));setMode3('walk');renderBar();meglerKort();vendFritt();
- if(OFFENTLIG){let sett=false;try{sett=!!localStorage.getItem(LS+'-omvis-'+hjemKey())}catch(e){}if(!sett)setTimeout(omVisning,600)}}
+ if(OFFENTLIG&&!(MEGLER&&MEGLER.godkjent)){let sett=false;try{sett=!!localStorage.getItem(LS+'-omvis-'+hjemKey())}catch(e){}if(!sett)setTimeout(omVisning,600)}}/* godkjent = kjøperversjon: ingen panel, bare den korte merkingen nederst (meglertest 15.11.2026) */
 function omVisning(){const p=MEGLER||{};try{localStorage.setItem(LS+'-omvis-'+hjemKey(),'1')}catch(e){}
  modal(`<h3>Om denne visningen</h3><div style="font-size:14px;line-height:1.5">
  <p><b>Uoffisiell forhåndsvisning.</b> LettVisning (LettMateriell Ramberg ENK, org.nr. 938 774 358) har laget den ut fra den offentlige annonsen for ${esc(S.name||'boligen')}. Den er ikke laget, bestilt eller godkjent av megleren eller selgeren.</p>
@@ -3274,7 +3275,7 @@ function personvern(){modal(`<h3>🔒 Personvern, bilder og mål</h3><div style=
  <p><b>Tjenester siden bruker:</b> GitHub Pages (driver nettsiden, også skrift og 3D-biblioteker) og Supabase (database for boligene og statistikken). Som ved alle nettsider får disse IP-adressen din når siden lastes, men den lagres ikke i statistikken.</p>
  <p>Kartdata © OpenStreetMap-bidragsytere (ODbL). Terreng: Kartverket.</p></div><div class="acts"><button class="btn" id="pvc">Lukk</button></div>`,m=>m.querySelector('#pvc').onclick=closeModal)}
 {const el=document.createElement('div');el.id='maalnote';el.style.cssText='position:fixed;left:8px;bottom:76px;z-index:5;font:11px system-ui;color:#fff;background:rgba(20,20,22,.45);padding:3px 8px;border-radius:8px;pointer-events:auto;cursor:pointer;display:none';
- el.textContent=VIS?'Uoffisiell forhåndsvisning · ikke godkjent av megler · mål og møbler er omtrentlige · Om visningen':'Illustrasjon fra annonse – mål og innredning er omtrentlige ⓘ';el.onclick=()=>VIS&&OFFENTLIG?omVisning():personvern();document.body.appendChild(el);
+ el.textContent=VIS?(MEGLER&&MEGLER.godkjent?'Tegnet etter annonsen · mål, møbler og utsikt er omtrentlige · Om visningen':'Uoffisiell forhåndsvisning · ikke godkjent av megler · mål, møbler og utsikt er omtrentlige · Om visningen'):'Illustrasjon fra annonse – mål og innredning er omtrentlige ⓘ';el.onclick=()=>VIS&&OFFENTLIG?omVisning():personvern();document.body.appendChild(el);
  setInterval(()=>{const k=hjemKey();el.style.display=k&&k!=='demohus'?'block':'none'},1000)}
 
 function justerMaal(){const rs=S.rooms.filter(r=>r.pts.length>=3);if(!rs.length){toast('Ingen rom å måle');return}
