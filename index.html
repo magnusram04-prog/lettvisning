@@ -885,7 +885,16 @@ function buildSite(st){
   const a=P(u0,v0,yT),b_=P(u1,v0,yT),c=P(u1,v1,yT),d=P(u0,v1,yT),r0=P(u0,vm,yT+rh),r1=P(u1,vm,yT+rh),pos=[];
   for(const t of[[a,b_,r1],[a,r1,r0],[c,d,r0],[c,r0,r1],[a,r0,d],[b_,c,r1]])t.forEach(v=>pos.push(...v));
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(new Array(pos.length/3*2).fill(0),2));g.computeVertexNormals();sink(g,m);return true};
- const own=st.modellert?null:st.blds.find(o=>o.own),Htop=H()+.35;
+ const own0=st.modellert?null:st.blds.find(o=>o.own),Htop=H()+.35;
+ // v85d: står et vindu inne i byggets omriss fra kartet, kuttes bygget ved vindusveggen. Ellers ser du ut på ditt eget tak og
+ // innsiden av egen fasade noen meter unna (Dælenenggata, 15.11.2026)
+ const own=own0&&(()=>{let p=own0.p;const RR=S.rooms||[],iR=(x,z)=>RR.some(r=>inPoly(x,z,r.pts));
+  for(const it of S.items||[]){if(!/^(vindu|balkongdor)/.test(it.type))continue;const nx=Math.sin(it.rot||0),nz=Math.cos(it.rot||0);
+   let sx=0;if(iR(it.x-nx*.5,it.z-nz*.5)&&!iR(it.x+nx*.5,it.z+nz*.5))sx=1;else if(iR(it.x+nx*.5,it.z+nz*.5)&&!iR(it.x-nx*.5,it.z-nz*.5))sx=-1;if(!sx)continue;
+   const ox=nx*sx,oz=nz*sx;if(!inPoly(it.x+ox*1.5,it.z+oz*1.5,p))continue;const d=q=>(q[0]-it.x)*ox+(q[1]-it.z)*oz-.15,o=[];
+   for(let i=0;i<p.length;i++){const a=p[i],c=p[(i+1)%p.length],da=d(a),dc=d(c);if(da<=0)o.push(a);if((da<=0)!==(dc<=0)){const t=da/(da-dc);o.push([a[0]+(c[0]-a[0])*t,a[1]+(c[1]-a[1])*t])}}
+   if(o.length>=3)p=o}
+  return p===own0.p?own0:Object.assign({},own0,{p})})();
  const ccx=(b.x0+b.x1)/2,ccz=(b.z0+b.z1)/2;
  // Nabobyggene samles per materiale (og nær/fjern, siden bare nære bygg trenger å kaste skygge) og slås sammen –
  // hundrevis av bygg blir da noen få tegnekall i stedet for to per bygg.
@@ -897,7 +906,7 @@ function buildSite(st){
  // ellers går nabobyggets vegger tvers gjennom rommene
  const RP=[];for(const r of [...(S.rooms||[]),...((S.levels||[]).flatMap(l=>l.rooms||[]))]){const xs=r.pts.map(p=>p[0]),zs=r.pts.map(p=>p[1]);for(let x=Math.min(...xs)+.2;x<Math.max(...xs)-.1;x+=.4)for(let z=Math.min(...zs)+.2;z<Math.max(...zs)-.1;z+=.4)if(inPoly(x,z,r.pts))RP.push([x,z])}
  const lavt=o=>{let n=0;for(const[x,z]of RP)if(inPoly(x,z,o.p)&&++n>=3)break;if(n<3)return false;const yb=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3;if(yb<-.25)add(prism(o.p,yb,-.25),[M.roof,villa?M.villa[0]:M.wall]);return true};
- for(const o of st.blds)if(o!==own&&!(st.modellert&&o.own)&&!lavt(o)&&!GAR.some(g=>{const cx=o.p.reduce((s,q)=>s+q[0],0)/o.p.length,cz=o.p.reduce((s,q)=>s+q[1],0)/o.p.length;return Math.hypot(cx-g.x,cz-g.z)<4})){const base=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3,k=hash(o.p),sh=Math.hypot(o.p[0][0]-ccx,o.p[0][1]-ccz)<=150;
+ for(const o of st.blds)if(o!==own0&&!(st.modellert&&o.own)&&!lavt(o)&&!GAR.some(g=>{const cx=o.p.reduce((s,q)=>s+q[0],0)/o.p.length,cz=o.p.reduce((s,q)=>s+q[1],0)/o.p.length;return Math.hypot(cx-g.x,cz-g.z)<4})){const base=Math.min(...o.p.map(q=>TY(q[0],q[1])))-.3,k=hash(o.p),sh=Math.hypot(o.p[0][0]-ccx,o.p[0][1]-ccz)<=150;
   if(villa){const wh=o.h*.7,top=base+.3+wh;putPrism(prism(o.p,base,top),M.tak[k%3],M.villa[k%6],sh);gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}
   else{const blokk=o.h>=25,top=base+.3+(blokk?o.h:o.h*.8);putPrism(prism(o.p,base,top),M.roof,M.walls[blokk?3:k%3],sh);if(!blokk)gable(o.p,top,M.tak[k%3],(g,m)=>put(g,m,sh))}}
  for(const{m,sh,gs}of BK.values()){const g=mergeGeometries(gs,false);gs.forEach(x=>x.dispose());if(!g)continue;g.computeBoundingSphere();const me=add(g,m);me.castShadow=sh}
@@ -1200,7 +1209,7 @@ function fixTangents(root){if(!root)return;root.traverse(o=>{const g=o.isMesh&&o
  Lyset for eksempelboligene beregnes på forhånd og legges ved appen (mappen lys/). Filnavnet er en hash av boligen
  (rom, vegger, møbler, tid på døgnet, lamper – uten de tilfeldige id-ene), så filen brukes bare når boligen er helt lik.
  Endrer man noe, finnes ingen fil, og «Beregn lys» virker som før. LYS_VER økes når lys- eller modellkoden endres. */
-const LYS_VER='2',PRE={tried:'',busy:false};
+const LYS_VER='3',PRE={tried:'',busy:false};
 function lysNormKey(){let k=giKey();const ids=new Map();let n=0;const add=a=>(a||[]).forEach(o=>{if(o&&o.id&&!ids.has(o.id))ids.set(o.id,'#'+(n++))});
  for(const L of levelList()){add(L.rooms);add(L.walls);add(L.items)}for(const[id,t]of ids)k=k.split(id).join(t);return LYS_VER+'|'+k}
 const lysSort=v=>Array.isArray(v)?v.map(lysSort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,lysSort(v[k])])):v;
