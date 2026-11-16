@@ -206,6 +206,7 @@ const CAT={
  gulvlampe:{n:'Gulvlampe',g:'Lys',i:'🪔',m:'floor',w:.4,d:.4,h:1.6,light:1,col:'#e9e4da'},
  sofa:{n:'Sofa',g:'Stue',i:'🛋️',m:'floor',w:2.1,d:.9,h:.82,col:'#7a8794',snap:1},
  lenestol:{n:'Lenestol',g:'Stue',i:'💺',m:'floor',w:.85,d:.85,h:.82,col:'#b8a58c'},
+ lenestol_polstret:{n:'Lenestol (helpolstret)',g:'Stue',i:'💺',m:'floor',w:.72,d:.86,h:.8,col:'#dcd8cf'},
  salongbord:{n:'Salongbord',g:'Stue',i:'⬛',m:'floor',w:1.1,d:.6,h:.42,col:WOOD},
  tvbenk:{n:'TV-benk',g:'Stue',i:'📺',m:'floor',w:1.6,d:.42,h:.45,col:'#e9e4da',snap:1},
  tv:{n:'TV 55" (vegg)',g:'Stue',i:'📺',m:'wall',w:1.23,d:.05,h:.71,y:1.25,col:DARK},
@@ -260,7 +261,7 @@ const CAT={
  knagger:{n:'Knaggrekke',g:'Soverom',i:'🪝',m:'wall',w:.5,d:.08,h:.1,y:1.7,col:'#2f3d5c'},
 };
 const GROUPS=['Mine modeller','Elektro','Lys','Bygg','Stue','Kjøkken','Soverom','Bad'];
-{const MK={fab:'sofa lenestol teppe dobbeltseng enkeltseng gardin',boucle:'buesofa loungestol puff stol_boucle',wood:'salongbord spisebord skrivebord nattbord bilde sofabord_rund vifte',satin:'bokhylle tvbenk kommode garderobe kjokkenbenk kjokkenvask overskap vaskemaskin panelovn dor vindu balkongdor stol skyvedor brystning sidebord spisebord_rund hoyskap kappe sikringsskap',metal:'komfyr kjoleskap ventilator',ceramic:'toalett badekar dusj veggwc servant',plastic:'stikk1 stikk2 stikk3 stikkbenk bryter dimmer termostat'};
+{const MK={fab:'sofa lenestol lenestol_polstret teppe dobbeltseng enkeltseng gardin',boucle:'buesofa loungestol puff stol_boucle',wood:'salongbord spisebord skrivebord nattbord bilde sofabord_rund vifte',satin:'bokhylle tvbenk kommode garderobe kjokkenbenk kjokkenvask overskap vaskemaskin panelovn dor vindu balkongdor stol skyvedor brystning sidebord spisebord_rund hoyskap kappe sikringsskap',metal:'komfyr kjoleskap ventilator',ceramic:'toalett badekar dusj veggwc servant',plastic:'stikk1 stikk2 stikk3 stikkbenk bryter dimmer termostat'};
  for(const[k,v]of Object.entries(MK))v.split(' ').forEach(t=>{if(CAT[t])CAT[t].mt=k})}
 const FLOORS={eik:['Eikeparkett','#c8a57a'],ruteparkett:['Ruteparkett, lys eik','#dcb486'],fiskeben:['Fiskebensparkett','#cba57a'],fiskeben_lys:['Fiskeben, lys eik','#d6be9c'],lys:['Lys parkett','#dfcaa9'],mosaikk:['Mosaikkflis','#ecebe6'],mork:['Mørk parkett','#6b4a33'],flis:['Grå flis','#b5b4b0'],hvitflis:['Hvit flis','#ecebe7'],graflis:['Lys grå flis','#c9c9c6'],brunflis:['Brunrød flis','#7c4a3e'],betong:['Betong','#a3a29e'],vinyl:['Grå vinyl','#8f9296'],hvitoljet:['1-stavs eik, hvitoljet','#e6d9c6'],teppegronn:['Teppegulv, grønt','#6f7a4e'],rodbrun:['Rødbrun parkett','#a8643c'],trefliser:['Terrassefliser, tre','#9a6a3e'],morkflis:['Mørk flis, fiskeben','#3d4044'],langflis_mork:['Mørkegrå flis 60×30','#5d5e58'],kvadratflis_mork:['Mørk flis 30×30','#45474a']};
 const WALLCOLS=['#f1ede6','#ffffff','#e8e2d6','#d9d4c7','#c7cfc4','#a9b8a3','#b7c4cf','#8fa3b5','#d8c3b0','#c99a85','#6f7b74','#3f4a52','#2e3440'];
@@ -1490,6 +1491,16 @@ const B={
   /* v88: pillows = liste med farger, jevnt fordelt langs ryggen (Dælen bilde 01 og 05) */if(it&&it.pillows&&it.pillows.length){const k=it.pillows.length,sp=k>1?(w-2*arm-.5)/(k-1):0;it.pillows.forEach((c,i)=>{const P=mat(c,{roughness:.95,bumpMap:NOISE,bumpScale:.6});P.userData.own=1;const x=k>1?-w/2+arm+.25+i*sp:0;rbx(g,.4,.38,.13,P,x,.6,-d/2+.38+(i%2)*.05,.06).rotation.set(-.25,(i%2?-1:1)*.12,0)});return}
   if(w>1.4){const P=mat('#d8cfc2',{roughness:.95,bumpMap:NOISE,bumpScale:.6});rbx(g,.42,.4,.13,P,-w/2+arm+.3,.6,-d/2+.38,.06).rotation.set(-.25,.15,0);rbx(g,.42,.4,.13,P,w/2-arm-.3,.6,-d/2+.38,.06).rotation.set(-.25,-.15,0)}},
  lenestol(g,w,d,h,M){B.sofa(g,w,d,h,M)},
+ /* helpolstret lenestol uten armlener og synlige bein (slipper chair): stoffbase til gulvet, bulende sete, myk rygg; it.pillows = puter (Huk bilde 12) */
+ lenestol_polstret(g,w,d,h,M,it){it=it||{};let Mb=M;/* v89: it.skinn = skinn, it.bein = farge på tynne metallbein, it.armer = myke rullearmlener (Toftes bilde 05) */
+  if(it.skinn){Mb=mat(it.color||'#b77c45',{roughness:.45});if(hasPBR){const nm=pbr('brown_leather_nor_gl',6);if(nm){Mb.normalMap=nm;Mb.normalScale=new THREE.Vector2(.25,.25)}}}
+  const M2=Mb.clone();M2.userData.own=1;M2.color.offsetHSL(0,0,.03);const seat=.43,bd=.2,lg=it.bein?.2:0,arm=it.armer?.15:0,iw=w-2*arm;
+  if(lg){const L=mat(it.bein,{roughness:.4,metalness:.6});for(const sx of[-1,1])for(const sz of[-1,1])rod(g,[sx*(w/2-.05),0,sz*(d/2-.07)],[sx*(w/2-.08),lg+.03,sz*(d/2-.1)],.009,.009,L,8)}
+  sbx(g,w,seat-.12-lg,d,Mb,0,lg+(seat-.12-lg)/2+.005,0,.05,0);sbx(g,iw-.01,.14,d-bd+.02,M2,0,seat-.07,bd/2,.06,.025);
+  const bk=sbx(g,w,h-.06-lg,bd,Mb,0,lg+(h-.06-lg)/2+.01,-d/2+bd/2,.07,0);bk.rotation.x=-.1;
+  const bc=sbx(g,iw-.06,h-seat-.02,.12,M2,0,seat+(h-seat)/2-.01,-d/2+bd+.04,.06,0);bc.rotation.x=-.16;
+  if(arm)for(const sx of[-1,1])sbx(g,arm,.27,d-.03,M2,sx*(w/2-arm/2),seat+.05,.015,.075,.03);
+  if(it.pillows&&it.pillows.length){it.pillows.forEach((c,i)=>{const P=mat(c,{roughness:.6,bumpMap:NOISE,bumpScale:.4});P.userData.own=1;pillow(g,.48,.32,.13,P,(i-(it.pillows.length-1)/2)*.2,seat+.2,-d/2+bd+.15,-.3,0,i%2?-.1:.1)})}},
  salongbord(g,w,d,h,M,it){if(!(it&&it.shelf))return B.spisebord(g,w,d,h,M);const W_=mat(it.color||'#f4f2ee',{roughness:.45});rbx(g,w,.03,d,W_,0,h-.015,0,.006);bx(g,w-.06,.02,d-.06,W_,0,.12,0);for(const sx of[-1,1])for(const sz of[-1,1])bx(g,.04,h-.03,.04,W_,sx*(w/2-.03),(h-.03)/2,sz*(d/2-.03))},
  spisebord(g,w,d,h,M){bx(g,w,.04,d,M,0,h-.02,0);for(const sx of[-1,1])for(const sz of[-1,1])bx(g,.05,h-.04,.05,M,sx*(w/2-.07),(h-.04)/2,sz*(d/2-.07))},
  skrivebord(g,w,d,h,M){B.spisebord(g,w,d,h,M);bx(g,.4,.5,d-.1,M,w/2-.25,.45,0)},
